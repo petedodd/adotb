@@ -4,7 +4,7 @@ library(ggplot2)
 library(readxl)
 
 ## ----------------- BMI/thinness -------
-##  BMI distribution?
+## BMI distribution
 ## 18.5 lower quintile
 ## 95th obese = 30
 
@@ -42,10 +42,8 @@ TH <- read_excel(here('rawdata/Adolescent Thiness Data.xlsx'))
 TH <- as.data.table(TH)
 TH <- TH[2:nrow(TH)]
 names(TH)[2] <- 'pcthin'
-names(TH)[2] <- 'pcthin'
 names(TH)[3] <- 'go'
 TH[,go:=NULL]
-
 
 ## calculate the RRs from thinness
 TH[,RR:=1.0]
@@ -56,10 +54,4 @@ for(i in 1:nrow(TH)){
 
 fwrite(TH,file=here('outdata/thinness.RRs.csv'))
 
-
-
-
-
-
-
-
+## TODO incorporate uncertainty in alph
