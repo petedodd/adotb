@@ -25,16 +25,21 @@ for(f in fz){
 }
 rnr <- rbindlist(rnr)
 
+## relative ARIs
+load(gh('LTBI/data/RR.Rdata'))
+rnr <- merge(rnr,RR,by='iso3',all.x = TRUE, all.y = FALSE)
+
 ## work on converting this to LTBI
 rnr[,ari:=exp(lari)]          #true ARI
 rnr[,year:= 2019 - year]       #age
 rnr <- rnr[order(replicate,iso3,year)] #order
-rnr[,H:=cumsum(ari),by=.(iso3,replicate)] #cumulative ARI
+rnr[,rr:=ifelse(year>14,rr,1.0)]       #RR step at 15
+rnr[,H:=cumsum(rr*ari),by=.(iso3,replicate)] #cumulative ARI, including RR
 
 ## distinguish past 2 years
 mask <- rep(1,length(unique(rnr$year)))
 mask[1:2] <- 0                          #all except last 2 years
-rnr[,dH:=cumsum(ari*mask),by=.(iso3,replicate)] #cumhaz!2y
+rnr[,dH:=cumsum(rr*ari*mask),by=.(iso3,replicate)] #cumhaz!2y
 rnr[,P:=1-exp(-H)]                  #ever
 rnr[,P1:=-exp(-H)+exp(-dH)]         #1st recent=prob ever - prob not<2
 
@@ -83,6 +88,3 @@ table(rnra$acat) #OK
 rnra$acat <- factor(rnra$acat,levels=c('10-14','15-19'),ordered = TRUE)
 
 save(rnra,file=gh('LTBI/data/rnra.Rdata'))
-
-
-## TODO include mixing in above
