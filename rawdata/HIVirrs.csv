@@ -1,0 +1,4 @@
+﻿NAME,DISTRIBUTION,DESCRIPTION,SOURCE,NOTE
+hivp,"LN(4.364,1.14)",IRR for TB incidence given HIV+/ART- (vs UNAIDS estimates),Dodd et al 2017,
+hivpi,"LN(2.066863,0.2800718)",IRR for TB incidence given HIV+/ART- (for individuals),Dodd et al 2017,
+artp,"LN(-1.203973,0.150482)",HR for TB incidence given HIV+/ART+ vs HIV+/ART-,Dodd et al 2016,

@@ -2,6 +2,14 @@ library(here)
 library(data.table)
 library(ggplot2)
 library(readxl)
+library(HEdtree) #install via devtools::install_github('petedodd/HEdtree')
+lo <- function(x) quantile(x,0.025)
+hi <- function(x) quantile(x,1-0.025)
+rds <- function(x) round(x,1)
+rds(10.1); rds(1.01); rds(-1e-5)
+fmt <- function(x,y,z) paste0(rds(x)," (",rds(y)," to ",rds(z),")")
+fmtpc <- function(x,y,z) paste0(rds(1e2*x)," (",rds(1e2*y)," to ",rds(1e2*z),")")
+gh <- function(x) glue(here(x))
 
 ## ----------------- BMI/thinness -------
 ## BMI distribution
@@ -80,3 +88,95 @@ TH[,RR.sd:=(RR.hi-RR.lo)/3.92]
 TH
 
 fwrite(TH,file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
+
+
+
+## ====== HIV ===
+
+## HIV data
+load(here('rawdata/H.Rdata')) #NOTE no uncertainty
+load(here('rawdata/ckey.Rdata'))
+H <- H[iso3 %in% ckey$iso3] #restrict to relevant countries
+
+## IRR estimates
+PD <- read.csv(here('rawdata/HIVirrs.csv'))
+PD[,c('NAME','DESCRIPTION')]
+## hivp,hivpi,artp
+P <- parse.parmtable(PD)
+names(P)
+
+## reshape
+H[,country:=NULL]
+H <- melt(H,id='iso3')
+H[,c('qty','acat'):=tstrsplit(variable,"\\.")]
+H <- dcast(H,iso3+acat~qty,value.var = 'value')
+
+## --- PSAify
+
+## extend H
+nrep <- 1e3 #replicates
+nn <- nrow(H)
+H <- H[rep(1:nn,each = nrep)]
+H[,replicate:=rep(1:nrep,nn)]
+
+## make IRRs
+IRR <- makePSA(nrep,P)
+IRR[,replicate:=1:nrep]
+IRR2 <- copy(IRR)
+IRR[,acat:='10-14']
+IRR2[,acat:='15-19']
+IRR <- rbind(IRR,IRR2)
+IRR <- merge(IRR,H,by=c('replicate','acat'))
+IRR[,c('a','h'):=.(artpc/1e2,hivpc/1e2)]
+IRR[,c('artpc','hivpc'):=NULL]
+IRR[,irr:=hivpi*(artp*a+1-a)]
+IRR[,irr2:=hivp*(artp*a+1-a)]
+IRR[,HIVinTB:=h*irr / (h*irr+1-h)]
+IRR[,HIVinTB2:=h*irr2 / (h*irr2+1-h)]
+IRM <- IRR[,.(HIVinTB=mean(HIVinTB),HIVinTB2=mean(HIVinTB2),hiv=mean(h)),by=.(iso3,acat)] #mean
+IRR
+
+## add in IRRs for thinness
+ckey[,newcountry:=UN]
+setdiff(ckey$UN,TH$Country)
+setdiff(TH$Country,ckey$UN)
+ckey[UN=="Democratic People's Republic of Korea",newcountry:="DPR Korea"]
+ckey[UN=="Democratic Republic of the Congo",newcountry:="DR Congo"]
+ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
+ckey[UN=="Papua New Guinea",newcountry:="PNG"]
+
+tmp <- merge(TH,ckey,by.x = 'Country',by.y = 'newcountry')
+tmp <- tmp[,.(iso3,thin=pcthin/1e2,RR,RR.sd)]
+tmp[,g.theta:=RR.sd^2/RR]
+tmp[,g.k:=RR/g.theta]
+tmp <- tmp[rep(1:nrow(tmp),2)]
+tmp[,acat:=rep(c('10-14','15-19'),each=nn/2)]
+tmp <- tmp[rep(1:nn,nrep)]
+tmp[,replicate:=rep(1:nrep,nn)]
+tmp[,IRRthin:=rgamma(nrow(tmp),shape=g.k,scale=g.theta)]
+
+## combine
+IRR <- merge(IRR,tmp[,.(replicate,iso3,acat,thin,IRRthin)],
+             by=c('replicate','iso3','acat'))
+
+save(IRR,file=here('PAF/data/IRR.Rdata'))
+
+
+## [(1-h+h*irr) - (1)] / (1-h+h*irr) = 1 - 1/(1-h+h*irr)
+IRR[,PAF.hiv1:=1-1/(1-h+h*irr)]
+IRR[,PAF.hiv2:=1-1/(1-h+h*irr2)]
+IRR[,PAF.thin:=1-1/(1-thin+thin*IRRthin)]
+
+IRRS <- IRR[,.(hiv1.mid=mean(PAF.hiv1),hiv1.lo=lo(PAF.hiv1),hiv1.hi=hi(PAF.hiv1),
+               hiv2.mid=mean(PAF.hiv2),hiv2.lo=lo(PAF.hiv2),hiv2.hi=hi(PAF.hiv2),
+               thinness.mid=mean(PAF.thin),thinness.lo=lo(PAF.thin),thinness.hi=hi(PAF.thin)),
+            by=.(iso3,acat)]
+
+IRRS[,thinness:=fmtpc(thinness.mid,thinness.lo,thinness.hi)]
+IRRS[,hiv1:=fmtpc(hiv1.mid,hiv1.lo,hiv1.hi)]
+IRRS[,hiv2:=fmtpc(hiv2.mid,hiv2.lo,hiv2.hi)]
+
+
+IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv1,hiv2)] 
+
+fwrite(IRRS,file=here('outdata/PAF.csv'))
