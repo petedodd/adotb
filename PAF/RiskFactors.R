@@ -241,6 +241,37 @@ curve(dlnorm(x,shsp$mu,shsp$sig),from=0.1,to=5,n=500) #check looks OK
 IRR[,IRRshs:=rlnorm(nrow(IRR),shsp$mu,shsp$sig)]
 
 
+## IAP
+## https://pubmed.ncbi.nlm.nih.gov/24903801/
+## 1.17 (95%CI 0.83 - 1.65)
+
+shsp <- getLNparms(1.17,(0.83-1.65)^2/3.92^2) #parametrize as log normal
+curve(dlnorm(x,shsp$mu,shsp$sig),from=0.1,to=5,n=500) #check looks OK
+IRR[,IRRiap:=rlnorm(nrow(IRR),shsp$mu,shsp$sig)]
+
+
+IAP <- fread(here('rawdata/Indoor Pollution Exposure for TB Modeling Study.csv'))
+
+setdiff(ckey$UN,IAP$Location)
+setdiff(IAP$Location,ckey$UN)
+tmp <- IAP[,.(UN=Location,
+              iap.mid=FactValueNumeric/1e2,
+              iap.lo=FactValueNumericLow/1e2,
+              iap.hi=FactValueNumericHigh/1e2)]
+IAP <- merge(tmp,ckey[,.(UN,iso3)],by='UN')
+
+IAPL <- IAP[rep(1:nrow(IAP),each=nrep)]
+IAPL[,replicate:=rep(1:nrep,nrow(IAP))]
+IAPL <- IAPL[,.(iso3,replicate,
+            iap=iap.mid,
+            E=iap.mid*(1-iap.mid)/((iap.hi-iap.lo)/3.92)^2-1)]
+IAPL[,a:=E*iap]
+IAPL[,b:=E*(1-iap)]
+IAPL[,shs:=rbeta(nrow(IAPL),a,b)]
+
+IRR <- merge(IRR,IAPL[,.(iso3,replicate,iap)],by=c('iso3','replicate'),all.x=TRUE)
+
+
 save(IRR,file=here('PAF/data/IRR.Rdata'))
 
 
@@ -248,17 +279,22 @@ save(IRR,file=here('PAF/data/IRR.Rdata'))
 IRR[,PAF.hiv:=1-1/(1-h+h*irr)]
 IRR[,PAF.thin:=1-1/(1-thin+thin*IRRthin)]
 IRR[,PAF.shs:=1-1/(1-shs+shs*IRRshs)]
+IRR[,PAF.iap:=1-1/(1-iap+iap*IRRiap)]
 
 IRRS <- IRR[,.(hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
                thinness.mid=mean(PAF.thin),thinness.lo=lo(PAF.thin),thinness.hi=hi(PAF.thin),
-               shs.mid=mean(PAF.shs),shs.lo=lo(PAF.shs),shs.hi=hi(PAF.shs)),
+               shs.mid=mean(PAF.shs),shs.lo=lo(PAF.shs),shs.hi=hi(PAF.shs),
+               iap.mid=mean(PAF.iap),iap.lo=lo(PAF.iap),iap.hi=hi(PAF.iap)),
             by=.(iso3,acat)]
 
 IRRS[,thinness:=fmtpc(thinness.mid,thinness.lo,thinness.hi)]
 IRRS[,hiv:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
 IRRS[,shs:=fmtpc(shs.mid,shs.lo,shs.hi)]
+IRRS[,iap:=fmtpc(iap.mid,iap.lo,iap.hi)]
 
 
-IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,shs)] 
+IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,shs,iap)]
 
 fwrite(IRRS,file=here('outdata/PAF.csv'))
+
+
