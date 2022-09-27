@@ -35,7 +35,6 @@ rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
 rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
 rnra[,inc0:=(P2) * prog.recent + (P-P2)*prog.slow] #baseline incidence
 
-
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
 if(file.exists(fn)){
@@ -52,15 +51,12 @@ if(file.exists(fn)){
   save(NR,file=fn)
 }
 
-
-
 ## aggregate over ages
 rnr <- rnra[,.(P=mean(P),P2=mean(P2),inc0=mean(inc0)),
                by=.(iso3,acat,replicate)] #mean over ages
 
 ## relative risk data
 load(gh('PAF/data/IRR.Rdata'))
-
 
 ## include HIV & pop
 rnr <- merge(rnr,
@@ -73,6 +69,8 @@ rnr[,inc.num0:=inc0*value]
 rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)*(1-shs+shs*IRRshs)]
 rnr[,inc.num:=inc*value]
 
+
+## TODO check uncertainty
 ## TOTAL
 rnrtot <- rnr[,.(P=weighted.mean(P,value),
                  P2=weighted.mean(P2,value),
@@ -93,6 +91,7 @@ lvls <- lvls[lvls!='TOTAL']
 lvls <- sort(as.character(lvls))
 lvls <- c(lvls,'TOTAL')
 rnr$iso3 <- factor(rnr$iso3,levels=lvls,ordered = TRUE)
+
 
 ## summarize
 rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
@@ -171,3 +170,32 @@ plt
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
 
+
+## quick compare with KS data
+load('~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.Rdata')
+
+TBC
+smy2
+
+smy2 <- merge(smy2,TBC[,.(iso3,KSI=incidence,acat)],
+              by=c('iso3','acat'),all.x=TRUE,all.y=FALSE)
+
+plt <- ggplot(smy2,aes(x=KSI,y=inc.num.mid,
+                ymin=inc.num.lo,ymax=inc.num.hi,
+                label=iso3,col=method)) +
+  geom_point(shape=1,size=2) +
+  geom_errorbar(width=10,alpha=0.75)+
+  geom_text_repel(show.legend = FALSE)+
+  scale_x_sqrt(limits=c(0,m),label=comma)+
+  scale_y_sqrt(limits=c(0,m),label=comma)+
+  geom_abline(slope=1,intercept = 0,col=2)+
+  facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+  ylab('Estimated incidence 2019 (sqrt scale)')+
+  xlab('KS estimate TB 2017 (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+plt
+
+ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.png')
+
+tmp <- smy2[iso3!='TOTAL',.(Snow=sum(KSI)/1e6,prog=sum(inc.num.mid)/1e6),by=.(acat,method)]
+fwrite(tmp,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/tbc.csv')

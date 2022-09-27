@@ -4,7 +4,7 @@ library(ggplot2)
 library(data.table)
 library(ggtext)
 gh <- function(x) glue(here(x))
-
+setDTthreads(1) #if parallelizing above
 ## gh('bla{cn}')
 
 ## setwd('../LTBIest')

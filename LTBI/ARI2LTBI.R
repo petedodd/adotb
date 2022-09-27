@@ -30,19 +30,67 @@ rnr <- rbindlist(rnr)
 load(gh('LTBI/data/RR.Rdata'))
 rnr <- merge(rnr,RR,by='iso3',all.x = TRUE, all.y = FALSE)
 
+
 ## work on converting this to LTBI
 rnr[,ari:=exp(lari)]          #true ARI
 rnr[,year:= 2019 - year]       #age
 rnr <- rnr[order(replicate,iso3,year)] #order
-rnr[,rr:=ifelse(year>14,rr,1.0)]       #RR step at 15
-rnr[,H:=cumsum(rr*ari),by=.(iso3,replicate)] #cumulative ARI, including RR
+rnr <- rnr[year<20]
+
+
+
+## rrmask for ages
+newrr <- paste0('rr',0:19)
+rnewrr <- paste0('R_',newrr)
+rnr[,c(newrr):=rr]
+rnr[,c(rnewrr):=rr]
+
+for(k in 0:19){
+  ## all
+  nm <- paste0('rr',k)
+  rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year>k,c(nm):=0.0]
+  ## recent
+  nm <- paste0('R_rr',k)
+  rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year>min(1,k),c(nm):=0.0]
+}
+
+rnr[replicate==1 & iso3=='AGO'] #check
+
+## sums
+rnr[,c(newrr):=lapply(.SD,function(x) x*ari),.SDcols=newrr] #multiply by ARI
+rnr[,c(rnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr] #multiply by ARI
+rnr[,c(newrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=newrr] #cumulative sum
+rnr[,c(rnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=rnewrr] #cumulative sum
+
+## reshape results
+keep <- c('iso3','replicate','year',newrr,rnewrr)
+tmp <- melt(rnr[,..keep],id=c('iso3','replicate','year'))
+tmp[,year2:=as.numeric(gsub("[a-zA-z]", "", variable))]
+tmp <- tmp[year==year2] #diagonal only (wasteful)
+tmp[,year2:=NULL]       #drop
+tmp[grepl('R_',variable),variable:='dH']
+tmp[variable!='dH',variable:='H']
+tmp <- dcast(tmp,iso3+replicate+year~variable,value.var = 'value')
+
+## merge back & drop
+drop <- c(newrr,rnewrr)
+rnr[,c(drop):=NULL]
+rnr <- merge(rnr,tmp,by=c('iso3','replicate','year'))
+rnr[,dH:=H-dH] #NOTE dH is actually cumulative EXCEPT last 2 years in calx
+
+
+## classic approach (w/o mixing)
+rnr <- rnr[order(replicate,iso3,year)] #order
 rnr[,H0:=cumsum(ari),by=.(iso3,replicate)] #cumulative ARI, not including RR
 
 ## distinguish past 2 years
 mask <- rep(1,length(unique(rnr$year)))
 mask[1:2] <- 0                          #all except last 2 years
-rnr[,dH:=cumsum(rr*ari*mask),by=.(iso3,replicate)] #cumhaz!2y
 rnr[,dH0:=cumsum(ari*mask),by=.(iso3,replicate)] #cumhaz!2y no mix
+
+## convert to prevalence
 rnr[,P:=1-exp(-H)]                  #ever
 rnr[,P1:=-exp(-H)+exp(-dH)]         #1st recent=prob ever - prob not<2
 rnr[,P0:=1-exp(-H0)]                  #ever
@@ -61,10 +109,15 @@ alph <- rbeta(nrow(rnr),shape1=pb,shape2=pa)
 rnr[,P2:=alph*(H-dH) + (1-alph)*(exp(-dH)-exp(-H))]      #anyrecent
 rnr[,P20:=alph*(H0-dH0) + (1-alph)*(exp(-dH0)-exp(-H0))]      #anyrecent
 
+## check
+rnr[iso3=='AGO' & replicate==1]
+rnr[iso3=='AGO' & replicate==1 & year==18]
+
+
 ## restrict to relevant age groups
 rnra <- rnr[year>=10 & year<20] #ADO only
 rnras <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),
-                 P0=mean(P0),P10=mean(P10),P2=mean(P20)),
+                 P0=mean(P0),P10=mean(P10),P20=mean(P20)),
               by=.(iso3,age=year)]
 ## P = ever
 ## P1 = 1st recent=prob ever - prob not<2
@@ -130,6 +183,7 @@ ggsave(GP,file=here('plots/LTBIcf.pdf'),w=20,h=15)
 
 
 tmp[,median(`with mixing RR`/`without mixing RR`),by=variable]
-## variable        V1
-## 1: infection <= 2 years 0.9943804
-## 2:   infection >2 years 1.0403761
+## variable       V1
+## <char>    <num>
+## 1: infection <= 2 years 1.211151
+## 2:   infection >2 years 1.019446
