@@ -128,7 +128,7 @@ smys <- smy[,.(iso3,acat,LTBI.fmt,
               inc.num.mid,inc.num.lo,inc.num.hi)]
 print(smy[iso3=='TOTAL',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
 
-fwrite(smy,file=gh('outdata/smy.csv')) #~1.2M or 1.5M
+fwrite(smy,file=gh('outdata/smy.csv')) #~1.4M or 1.7M
 save(smy,file=gh('progression/data/smy.Rdata'))
 
 smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
@@ -198,4 +198,22 @@ plt
 ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.png')
 
 tmp <- smy2[iso3!='TOTAL',.(Snow=sum(KSI)/1e6,prog=sum(inc.num.mid)/1e6),by=.(acat,method)]
+tmp
 fwrite(tmp,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/tbc.csv')
+
+
+m <- 1e6*0.75
+plt <- ggplot(smy2,aes(x=notified,y=KSI,
+                       label=iso3,col=method)) +
+  geom_point(shape=1,size=2) +
+  geom_text_repel(show.legend = FALSE)+
+  scale_x_sqrt(limits=c(0,m),label=comma)+
+  scale_y_sqrt(limits=c(0,m),label=comma)+
+  geom_abline(slope=1,intercept = 0,col=2)+
+  facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+  ylab('KSI 2017 (sqrt scale)')+
+  xlab('Notified TB 2019 (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+plt
+
+ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC2.png')
