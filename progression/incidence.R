@@ -13,7 +13,7 @@ hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
 rd(1); rd(1234); rd(1e9)
-fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," - ",rd(z),")")
+fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
 gh <- function(x) glue(here(x))
 
 
@@ -61,12 +61,12 @@ load(gh('PAF/data/IRR.Rdata'))
 ## include HIV & pop
 rnr <- merge(rnr,
              IRR[,.(value=pop,iso3,acat,replicate,
-                    h,irr,thin,IRRthin,shs,IRRshs)],
+                    h,irr,thin,IRRthin)],
              by=c('iso3','acat','replicate'))
 rnr[,LTBI:=P*value]
 rnr[,LTBI2:=P2*value]
 rnr[,inc.num0:=inc0*value]
-rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)*(1-shs+shs*IRRshs)]
+rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)]
 rnr[,inc.num:=inc*value]
 
 
@@ -166,7 +166,7 @@ plt <- ggplot(smy2,aes(x=notified,y=inc.num.mid,
   theme_light()+theme(legend.position = 'top')
 plt
 
-
+## TODO smarten
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
 
@@ -201,6 +201,12 @@ tmp <- smy2[iso3!='TOTAL',.(Snow=sum(KSI)/1e6,prog=sum(inc.num.mid)/1e6),by=.(ac
 tmp
 fwrite(tmp,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/tbc.csv')
 
+## comparison of totals
+tot <- smy2[iso3!='TOTAL',.(snowtot=sum(KSI),inc=sum(inc.num.mid)),by=.(acat,method)]
+tot[,inc/snowtot]
+tot <- smy2[iso3!='TOTAL',.(snowtot=sum(KSI),inc=sum(inc.num.mid)),by=.(method)]
+tot[,inc/snowtot]
+
 
 m <- 1e6*0.75
 plt <- ggplot(smy2,aes(x=notified,y=KSI,
@@ -217,3 +223,9 @@ plt <- ggplot(smy2,aes(x=notified,y=KSI,
 plt
 
 ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC2.png')
+
+
+## TODO list
+## check prog factor
+## compare snow, compare IHME?
+## include w/ and w/o mixing
