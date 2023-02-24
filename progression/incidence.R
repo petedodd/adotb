@@ -229,3 +229,4 @@ ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC2.png
 ## check prog factor
 ## compare snow, compare IHME?
 ## include w/ and w/o mixing
+## go back over checks in LTBI code
