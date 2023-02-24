@@ -18,7 +18,8 @@ gh <- function(x) glue(here(x))
 ## 95th obese = 30
 
 ## fit gamma distribution to these assumptions:
-F <- function(x) (qgamma(0.2,shape=x[1],scale=x[2])-18.5)^2 + (qgamma(0.95,shape=x[1],scale=x[2])-30)^2 #error
+F <- function(x) (qgamma(0.2,shape=x[1],scale=x[2])-18.5)^2 +
+                   (qgamma(0.95,shape=x[1],scale=x[2])-30)^2 #error
 (ans <- optim(par=c(2,20),fn=F,method='L-BFGS-B',lower=0.1,upper=100)) #ans:  25.4526201  0.8751584
 curve(dgamma(x,shape=ans$par[1],scale=ans$par[2]),from=1,to=50) #check
 
@@ -164,101 +165,39 @@ IRR <- merge(IRR,tmp[,.(replicate,iso3,acat,thin,IRRthin)],
              by=c('replicate','iso3','acat'))
 
 
-
-## === SHS ===
-load(here('rawdata/whokey.Rdata'))
-
-## exposure data
-S <- fread(here('rawdata/SHS.csv'),skip=1)
-nn <- names(S)
-nn <- nn[c(1,2,5,8,11)]
-SP <- S[,..nn]
-
-## look
-SPM <- melt(SP,id='Country')
-ggplot(SPM,aes(variable,value,col=Country,group=Country))+
-  geom_point()+geom_line()
-ggsave(here('plots/SHS_inputs.pdf'),w=10,h=5,device = cairo_pdf)
-
-
-## relative
-SP[,RR1:=`≥1 day`/`≥1 day`]
-SP[,RR3:=`≥3 days`/`≥1 day`]
-SP[,RR5:=`≥5 days`/`≥1 day`]
-SP[,RR7:=`7 days`/`≥1 day`]
-
-SPM <- melt(SP[,.(Country,RR1,RR3,RR5,RR7)],id='Country')
-
-ggplot(SPM,aes(variable,value,col=Country,group=Country))+
-  geom_point()+geom_line()
-ggsave(here('plots/SHS_inputsRR.pdf'),w=10,h=5)
-
-
-## regional meta-analysis to fill in missing
-S <- merge(S,ckey,by.x = 'Country',by.y = 'newcountry')
-S <- merge(S,whokey,all.y=FALSE,by='iso3')
-S[,median(`≥1 day`,na.rm=TRUE),by=g_whoregion]
-S[is.na(`≥1 day`),table(g_whoregion)]
-S[,median(`7 days`,na.rm=TRUE),by=g_whoregion]
-S[is.na(`7 days`),table(g_whoregion)]
-
-S7 <- S[!is.na(`7 days`),.(iso3,g_whoregion,`7 days`,se=(`upper CI_7`-`lower CI_7`)/3.92)]
-S7$g_whoregion <- as.factor(S7$g_whoregion)
-S7
-
-ma <- rma(yi=S7$`7 days`,sei=S7$se,mods = ~1+S7$g_whoregion)
-S7[,.(unique(g_whoregion),as.integer(unique(g_whoregion)))]
-
-shsp <- unique(cbind(as.data.table(predict(ma)),g_whoregion=S7$g_whoregion))
-
-S <- merge(S,shsp[,.(g_whoregion,pred,ci.lb,ci.ub)],by='g_whoregion',all.x = TRUE,all.y=FALSE)
-S[,sde:=`7 days`]
-S[,sde.hi:=`upper CI_7`]
-S[,sde.lo:=`lower CI_7`]
-
-S[is.na(sde),c('sde','sde.lo','sde.hi'):=.(pred,ci.lb,ci.ub)]
-
-## complete version
-S <- S[,.(iso3,sde,sde.lo,sde.hi)]
-SL <- S[rep(1:nrow(S),each=nrep)]
-SL[,replicate:=rep(1:nrep,nrow(S))]
-SL <- SL[,.(iso3,replicate,
-            sde=sde/1e2,
-            E=sde*(100-sde)/((sde.hi-sde.lo)/3.92)^2-1)]
-SL[,a:=E*sde]
-SL[,b:=E*(1-sde)]
-SL[,shs:=rbeta(nrow(SL),a,b)]
-
-
-## merge into IRR
-IRR <- merge(IRR,SL[,.(iso3,replicate,shs)],by=c('iso3','replicate'),all.x=TRUE)
-
-## 1·59, 95% CI 1·11–2·27 from Dogar et al
-shsp <- getLNparms(1.59,(2.27-1.11)^2/3.92^2) #parametrize as log normal
-curve(dlnorm(x,shsp$mu,shsp$sig),from=0.1,to=5,n=500) #check looks OK
-
-## add in IRR for shs
-IRR[,IRRshs:=rlnorm(nrow(IRR),shsp$mu,shsp$sig)]
-
 save(IRR,file=here('PAF/data/IRR.Rdata'))
 
 
 ## [(1-h+h*irr) - (1)] / (1-h+h*irr) = 1 - 1/(1-h+h*irr)
 IRR[,PAF.hiv:=1-1/(1-h+h*irr)]
 IRR[,PAF.thin:=1-1/(1-thin+thin*IRRthin)]
-IRR[,PAF.shs:=1-1/(1-shs+shs*IRRshs)]
 
-IRRS <- IRR[,.(hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
-               thinness.mid=mean(PAF.thin),thinness.lo=lo(PAF.thin),thinness.hi=hi(PAF.thin),
-               shs.mid=mean(PAF.shs),shs.lo=lo(PAF.shs),shs.hi=hi(PAF.shs)),
+## summary table
+IRRS <- IRR[,.(h.mid=mean(h),h.lo=lo(h),h.hi=hi(h),
+               a.mid=mean(a),a.lo=lo(a),a.hi=hi(a),
+               th.mid=mean(thin),th.lo=lo(thin),th.hi=hi(thin),
+               hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
+               thinness.mid=mean(PAF.thin),thinness.lo=lo(PAF.thin),thinness.hi=hi(PAF.thin)),
             by=.(iso3,acat)]
-
-IRRS[,thinness:=fmtpc(thinness.mid,thinness.lo,thinness.hi)]
-IRRS[,hiv:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
-IRRS[,shs:=fmtpc(shs.mid,shs.lo,shs.hi)]
-
-
-IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,shs)]
+IRRS[,thinness:=paste0(rds(th.mid*1e2))]
+IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
+IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
+IRRS[,thinness.PAF:=fmtpc(thinness.mid,thinness.lo,thinness.hi)]
+IRRS[,hiv.PAF:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
+IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,art,thinness.PAF,hiv.PAF)]
+IRRS <- dcast(IRRS,iso3 ~ acat, value.var = c('thinness','thinness.PAF','hiv','art','hiv.PAF'))
+IRRS <- merge(IRRS,ckey[,.(iso3,country=newcountry)],by='iso3')
+setcolorder(IRRS,neworder = c("iso3","country",
+                              "thinness_10-14",
+                              "thinness.PAF_10-14",
+                              "hiv_10-14",
+                              "art_10-14",
+                              "hiv.PAF_10-14",
+                              "thinness_15-19",
+                              "thinness.PAF_15-19",
+                              "hiv_15-19",
+                              "art_15-19",
+                              "hiv.PAF_15-19"))
 
 fwrite(IRRS,file=here('outdata/PAF.csv'))
 
