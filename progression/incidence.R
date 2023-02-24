@@ -33,7 +33,7 @@ load(file=gh('LTBI/data/rnra.Rdata'))
 rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
 rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
 rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
-rnra[,inc0:=(P2) * prog.recent + (P-P2)*prog.slow] #baseline incidence
+rnra[,inc0:=(P2) * prog.recent + (P-P2) * prog.slow] #baseline incidence
 
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')

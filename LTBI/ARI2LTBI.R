@@ -11,7 +11,7 @@ hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
 rd(1); rd(1234); rd(1e9)
-fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," - ",rd(z),")")
+fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
 gh <- function(x) glue(here(x))
 
 
@@ -30,49 +30,106 @@ rnr <- rbindlist(rnr)
 load(gh('LTBI/data/RR.Rdata'))
 rnr <- merge(rnr,RR,by='iso3',all.x = TRUE, all.y = FALSE)
 
-
 ## work on converting this to LTBI
 rnr[,ari:=exp(lari)]          #true ARI
 rnr[,year:= 2019 - year]       #age
 rnr <- rnr[order(replicate,iso3,year)] #order
 rnr <- rnr[year<20]
 
-
-
 ## rrmask for ages
 newrr <- paste0('rr',0:19)
 rnewrr <- paste0('R_',newrr)
 rnr[,c(newrr):=rr]
 rnr[,c(rnewrr):=rr]
+nmnewrr <- paste0('nm.rr',0:19) #no mix versions
+nmrnewrr <- paste0('nm.R_',newrr)
+rnr[,c(nmnewrr):=rr]
+rnr[,c(nmrnewrr):=rr]
+nmnewrr <- paste0('nm.rr',0:19) #no mix versions
+y1rnewrr <- paste0('y1R_',newrr) #yrs 1
+nmy1rnewrr <- paste0('nm.y1R_',newrr)
 
+## NOTE can't acquire risk for ages not yet lived
 for(k in 0:19){
   ## all
+  ## -- mixing
   nm <- paste0('rr',k)
   rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
   rnr[year>k,c(nm):=0.0]
+  ## -- no mixing
+  nm <- paste0('nm.rr',k)
+  rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year>k,c(nm):=0.0]
   ## recent
+  ## -- mixing
   nm <- paste0('R_rr',k)
   rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
   rnr[year>min(1,k),c(nm):=0.0]
+  ## -- no mixing
+  nm <- paste0('nm.R_rr',k)
+  rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year>min(1,k),c(nm):=0.0]
+  ## really recent = 1 year
+  ## -- mixing
+  nm <- paste0('y1R_rr',k)
+  ## rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year==0,c(nm):=ifelse(k>=14,rr,1.0)] #step @ 15
+  rnr[year>0,c(nm):=0.0]
+  ## -- no mixing
+  nm <- paste0('nm.y1R_rr',k)
+  ## rnr[year>=max(0,k+1-14),c(nm):=1.0] #step @ 15
+  rnr[year==0,c(nm):=1.0] #step @ 15
+  rnr[year>0,c(nm):=0.0]
 }
 
 rnr[replicate==1 & iso3=='AGO'] #check
 
 ## sums
-rnr[,c(newrr):=lapply(.SD,function(x) x*ari),.SDcols=newrr] #multiply by ARI
-rnr[,c(rnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr] #multiply by ARI
+## -- mix versions
+rnr[,c(newrr):=lapply(.SD,function(x) x*ari),.SDcols=newrr] #multiply by ARI: all
+rnr[,c(rnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr]   #multiply by ARI: 2y recent
+rnr[,c(y1rnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr] #multiply by ARI: 1y recent
+## -- no mix versions
+rnr[,c(nmnewrr):=lapply(.SD,function(x) x*ari),.SDcols=newrr] #multiply by ARI: all
+rnr[,c(nmrnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr]   #multiply by ARI: 2y recent
+rnr[,c(nmy1rnewrr):=lapply(.SD,function(x) x*ari),.SDcols=rnewrr] #multiply by ARI: 1y recent
+
+## cumulatives
+## -- mix versions
 rnr[,c(newrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=newrr] #cumulative sum
 rnr[,c(rnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=rnewrr] #cumulative sum
+rnr[,c(y1rnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=y1rnewrr] #cumulative sum
+## -- no mix versions
+rnr[,c(nmnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=nmnewrr] #cumulative sum
+rnr[,c(nmrnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=nmrnewrr] #cumulative sum
+rnr[,c(nmy1rnewrr):=lapply(.SD,sum),by=.(iso3,replicate),.SDcols=nmy1rnewrr] #cumulative sum
 
 ## reshape results
-keep <- c('iso3','replicate','year',newrr,rnewrr)
+keep <- c('iso3','replicate','year',
+          newrr,rnewrr,y1rnewrr,
+          nmnewrr,nmrnewrr,nmy1rnewrr)
 tmp <- melt(rnr[,..keep],id=c('iso3','replicate','year'))
-tmp[,year2:=as.numeric(gsub("[a-zA-z]", "", variable))]
+## safety
+tmp[,year2:=gsub('y1','',variable)] #remove y1
+tmp[,year2:=as.numeric(gsub("[a-zA-z]", "", year2))] #WTF?!
 tmp <- tmp[year==year2] #diagonal only (wasteful)
 tmp[,year2:=NULL]       #drop
-tmp[grepl('R_',variable),variable:='dH']
-tmp[variable!='dH',variable:='H']
-tmp <- dcast(tmp,iso3+replicate+year~variable,value.var = 'value')
+tmp[,mixing:='random']
+tmp[!grepl('nm',variable),mixing:='assortative']
+tmp[,variable:=gsub('nm\\.','',variable)]
+tmp[grepl('y1R_',variable),variable:='dH1']
+tmp[grepl('R_',variable),variable:='dH2']
+tmp[grepl('rr',variable),variable:='H']
+
+## checks
+tmp[iso3=='AGO' & replicate==1]
+tmp[iso3=='AGO' & replicate==1,unique(variable)]
+tmp[iso3=='AGO' & replicate==1,table(variable)]
+
+## reshape
+tmp <- dcast(tmp,iso3+mixing+replicate+year~variable,value.var = 'value')
+
+## TODO jj up to here
 
 ## merge back & drop
 drop <- c(newrr,rnewrr)
