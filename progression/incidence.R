@@ -7,6 +7,7 @@ library(ggplot2)
 library(ggrepel)
 library(glue)
 library(HEdtree)
+library(ggarchery)
 
 ## utility functions
 hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
@@ -34,7 +35,7 @@ pvy1 <- pvy * sqrt(f); pvy2 <- pvy * sqrt(1-f);
 pzy1 <- getAB(pmy1,pvy1);
 pzy2 <- getLNparms(pmy2,pvy2)
 ## curve(dbeta(x,pzy1$a,pzy1$b));curve(dbeta(x,pzy2$a,pzy2$b))
-curve(dlnorm(x,pzy2$mu,pzy2$sig))
+## curve(dlnorm(x,pzy2$mu,pzy2$sig))
 ## old
 pmo1 <- pmo * f; pmo2 <- pmo * (1-f);
 pvo1 <- pvo * sqrt(f); pvo2 <- pvo * sqrt(1-f);
@@ -181,7 +182,8 @@ smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
 smy[,CDR0:=1e2*notified/inc.num0.mid]
 smy[,CDR:=1e2*notified/inc.num.mid]
 
-tmp <- smy[!is.na(CDR),.(iso3,acat,CDR0,CDR)]
+(tmp <- smy[!is.na(CDR),.(iso3,mixing,acat,CDR0,CDR)][order(mixing)])
+
 fwrite(tmp,file=gh('outdata/CDR.csv'))
 
 ## reformat for plotting
@@ -195,23 +197,23 @@ smy2[grepl('0',variable),method:='without risk factors']
 smy2[,variable:=gsub('0','',variable)]
 smy2 <- dcast(smy2,iso3+acat+notified+method + mixing ~ variable,value.var = 'value')
 
-## plot
-m <- 1e6*0.75
-plt <- ggplot(smy2,aes(x=notified,y=inc.num.mid,
-                      ymin=inc.num.lo,ymax=inc.num.hi,
-                      label=iso3,shape=mixing,
-                      col=method)) +
-  geom_point(size=2) +
-  geom_errorbar(width=10,alpha=0.75)+
-  geom_text_repel(show.legend = FALSE)+
-  scale_x_sqrt(limits=c(0,m),label=comma)+
-  scale_y_sqrt(limits=c(0,m),label=comma)+
-  geom_abline(slope=1,intercept = 0,col=2)+
-  facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
-  ylab('Estimated incidence 2019 (sqrt scale)')+
-  xlab('Notified TB 2019 (sqrt scale)')+
-  theme_light()+theme(legend.position = 'top')
-plt
+## ## plot
+## m <- 1e6*0.75
+## plt <- ggplot(smy2,aes(x=notified,y=inc.num.mid,
+##                       ymin=inc.num.lo,ymax=inc.num.hi,
+##                       label=iso3,shape=mixing,
+##                       col=method)) +
+##   geom_point(size=2) +
+##   geom_errorbar(width=10,alpha=0.75)+
+##   geom_text_repel(show.legend = FALSE)+
+##   scale_x_sqrt(limits=c(0,m),label=comma)+
+##   scale_y_sqrt(limits=c(0,m),label=comma)+
+##   geom_abline(slope=1,intercept = 0,col=2)+
+##   facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+##   ylab('Estimated incidence 2019 (sqrt scale)')+
+##   xlab('Notified TB 2019 (sqrt scale)')+
+##   theme_light()+theme(legend.position = 'top')
+## plt
 
 load(here('progression/data/ckey.Rdata'))
 smy2 <- merge(smy2,ckey,by = 'iso3',all.x=TRUE)
@@ -223,23 +225,27 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
               aes(x=notified,y=inc.num.mid,
                   ymin=inc.num.lo,ymax=inc.num.hi,
                   label=newcountry)) +
-  geom_point(size=2) +
+  geom_abline(slope=1,intercept = 0,col=2)+
+  geom_arrowsegment(data=smy2,
+                    aes(x = notified-1e5*sqrt(notified/2e5)/4,
+                        xend = notified, y = inc.num.mid, yend = inc.num.mid,
+                        fill=paste0(method,', ',mixing),
+                        col=paste0(method,', ',mixing)),
+                    arrows = arrow(type = 'closed',length = unit(0.07, "inches")))+
+  geom_point(size=2,shape=1) +
   geom_errorbar(width=10,alpha=0.75)+
-  geom_text_repel(show.legend = FALSE)+
+  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = 1e2)+
   scale_x_sqrt(limits=c(0,m),label=comma)+
   scale_y_sqrt(limits=c(0,m),label=comma)+
-  geom_abline(slope=1,intercept = 0,col=2)+
+  scale_fill_colorblind(name=NULL)+
+  scale_color_colorblind(name=NULL)+
   facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
-  ylab('Estimated incidence 2019 (sqrt scale)')+
-  xlab('Notified TB 2019 (sqrt scale)')+
-  theme_light()
-plt
+  ylab('Estimated tuberculosis incidence 2019 (sqrt scale)')+
+  xlab('Notified tuberculosis 2019 (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+## plt
 
 
-##  geom_segment(aes(x=5, y=6, xend=8, yend=9), arrow = arrow(length=unit(.5, 'cm')))
-## https://cran.r-project.org/web/packages/ggarchery/readme/README.html
-
-## TODO smarten
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
 
