@@ -17,23 +17,56 @@ fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
 gh <- function(x) glue(here(x))
 
 
-## Martinez progression rates:
+## Martinez 2-year progression rates:
 ## 8.8 (3.7-19.7) 10-14
 ## 10.6 (4.4-23.3)
-pzy <- getAB(8.8/1e2,(19.7-3.7)^2/392^2)
-pzo <- getAB(10.6/1e2,(23.3-4.4)^2/392^2)
+pmy <- 8.8/1e2; pvy <- (19.7-3.7)^2/392^2
+pzy <- getAB(pmy,pvy)
+pmo <- 10.6/1e2; pvo <- (23.3-4.4)^2/392^2
+pzo <- getAB(pmo,pvo)
 pzz <- data.table(acat=c('10-14','15-19'),A=c(pzy$a,pzo$a),B=c(pzy$b,pzo$b))
 
-## Ragonnet slow progression:
+## 89% within first year, 98% within 2 years
+f <- 0.89/0.98 #fraction of 2 year progression within 1 year
+## young
+pmy1 <- pmy * f; pmy2 <- pmy * (1-f);
+pvy1 <- pvy * sqrt(f); pvy2 <- pvy * sqrt(1-f);
+pzy1 <- getAB(pmy1,pvy1);
+pzy2 <- getLNparms(pmy2,pvy2)
+## curve(dbeta(x,pzy1$a,pzy1$b));curve(dbeta(x,pzy2$a,pzy2$b))
+curve(dlnorm(x,pzy2$mu,pzy2$sig))
+## old
+pmo1 <- pmo * f; pmo2 <- pmo * (1-f);
+pvo1 <- pvo * sqrt(f); pvo2 <- pvo * sqrt(1-f);
+pzo1 <- getAB(pmo1,pvo1);
+## pzo2 <- getAB(pmo2,pvo2)
+pzo2 <- getLNparms(pmo2,pvo2)
+## curve(dbeta(x,pzo1$a,pzo1$b));curve(dbeta(x,pzo2$a,pzo2$b))
+pzzb <- data.table(acat=c('10-14','15-19'),
+                   A1=c(pzy1$a,pzo1$a),B1=c(pzy1$b,pzo1$b),
+                   ## A2=c(pzy2$a,pzo2$a),B2=c(pzy2$b,pzo2$b)
+                   m2=c(pzy2$mu,pzo2$mu),s2=c(pzy2$sig,pzo2$sig)
+                   )
+
+## Ragonnet slow progression for >2 years:
 eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
 1e2*mean(rlnorm(1e4,meanlog=-6.89,sdlog=0.58)) #~0.1%/y mean
 
 ## load LTBI:
 load(file=gh('LTBI/data/rnra.Rdata'))
-rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
-rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
+## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
+## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
+rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
+rnra[,prog.recent1:=rbeta(nrow(rnra),shape1=A1,shape2=B1)]
+rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
+## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
+
 rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
-rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
+
+## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
+rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
+
+
 
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
@@ -52,7 +85,7 @@ if(file.exists(fn)){
 }
 
 ## aggregate over ages
-rnr <- rnra[,.(P=mean(P),P1=mean(P1),inc0=mean(inc0)),
+rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
                by=.(iso3,acat,replicate,mixing)] #mean over ages
 
 ## relative risk data
@@ -65,6 +98,7 @@ rnr <- merge(rnr,
              by=c('iso3','acat','replicate'))
 rnr[,LTBI:=P*value]
 rnr[,LTBI1:=P1*value]
+rnr[,LTBI2:=P2*value]
 rnr[,inc.num0:=inc0*value]
 rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)]
 rnr[,inc.num:=inc*value]
@@ -74,10 +108,12 @@ rnr[,inc.num:=inc*value]
 ## TOTAL
 rnrtot <- rnr[,.(P=weighted.mean(P,value),
                  P1=weighted.mean(P1,value),
+                 P2=weighted.mean(P2,value),
                  inc0=weighted.mean(inc0,value),
                  inc=weighted.mean(inc,value),
                  LTBI=sum(LTBI),
                  LTBI1=sum(LTBI1),
+                 LTBI2=sum(LTBI2),
                  inc.num0=sum(inc.num0),
                  inc.num=sum(inc.num),
                  value=sum(value)
@@ -101,6 +137,9 @@ rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
                 LTBI1.lo=lo(LTBI1),P1.lo=mean(P1),
                 LTBI1.hi=hi(LTBI1),P1.hi=mean(P1),
+                LTBI2.mid=mean(LTBI2),P2.mid=mean(P2),
+                LTBI2.lo=lo(LTBI2),P2.lo=mean(P2),
+                LTBI2.hi=hi(LTBI2),P2.hi=mean(P2),
                 P.lo=lo(P),P.hi=hi(P),
                 inc0.hi=hi(inc0),inc0.lo=lo(inc0),
                 inc.hi=hi(inc),inc.lo=lo(inc),
@@ -115,6 +154,7 @@ smy <- rnrss[,.(iso3,acat,mixing,
                 inc.num0.mid,inc.num0.lo,inc.num0.hi,
                 inc.num.mid,inc.num.lo,inc.num.hi,
                 LTBI1.mid,LTBI1.lo,LTBI1.hi,
+                LTBI2.mid,LTBI2.lo,LTBI2.hi,
                 inc.mid,inc.lo,inc.hi,
                 inc0.mid,inc0.lo,inc0.hi
                 )]
@@ -129,8 +169,13 @@ smys <- smy[,.(iso3,mixing,acat,LTBI.fmt,
               inc.num.mid,inc.num.lo,inc.num.hi)]
 print(smy[iso3=='TOTAL' & mixing=='assortative',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
 
-fwrite(smy,file=gh('outdata/smy.csv')) #~1.4M or 1.7M
-save(smy,file=gh('progression/data/smy.Rdata'))
+## fwrite(smy,file=gh('outdata/smy.csv')) #
+## save(smy,file=gh('progression/data/smy.Rdata'))
+
+## 2%
+## smold <- fread(gh('outdata/smy.csv'))
+## smy[iso3=='TOTAL' & mixing=='assortative',sum(inc.num.mid)/1e6]/
+##   smold[iso3=='TOTAL' & mixing=='assortative',sum(inc.num.mid)/1e6]
 
 smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
 smy[,CDR0:=1e2*notified/inc.num0.mid]
