@@ -213,6 +213,32 @@ plt <- ggplot(smy2,aes(x=notified,y=inc.num.mid,
   theme_light()+theme(legend.position = 'top')
 plt
 
+load(here('progression/data/ckey.Rdata'))
+smy2 <- merge(smy2,ckey,by = 'iso3',all.x=TRUE)
+
+
+## plot
+m <- 1e6*0.75
+plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
+              aes(x=notified,y=inc.num.mid,
+                  ymin=inc.num.lo,ymax=inc.num.hi,
+                  label=newcountry)) +
+  geom_point(size=2) +
+  geom_errorbar(width=10,alpha=0.75)+
+  geom_text_repel(show.legend = FALSE)+
+  scale_x_sqrt(limits=c(0,m),label=comma)+
+  scale_y_sqrt(limits=c(0,m),label=comma)+
+  geom_abline(slope=1,intercept = 0,col=2)+
+  facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+  ylab('Estimated incidence 2019 (sqrt scale)')+
+  xlab('Notified TB 2019 (sqrt scale)')+
+  theme_light()
+plt
+
+
+##  geom_segment(aes(x=5, y=6, xend=8, yend=9), arrow = arrow(length=unit(.5, 'cm')))
+## https://cran.r-project.org/web/packages/ggarchery/readme/README.html
+
 ## TODO smarten
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)

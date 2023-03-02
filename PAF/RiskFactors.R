@@ -150,6 +150,9 @@ ckey[UN=="Democratic Republic of the Congo",newcountry:="DR Congo"]
 ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
 ckey[UN=="Papua New Guinea",newcountry:="PNG"]
 
+save(ckey,file=here('progression/data/ckey.Rdata'))
+
+
 tmp <- merge(TH,ckey,by.x = 'Country',by.y = 'newcountry')
 tmp <- tmp[,.(iso3,thin=pcthin/1e2,RR,RR.sd)]
 tmp[,g.theta:=RR.sd^2/RR]
