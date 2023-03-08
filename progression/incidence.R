@@ -61,11 +61,18 @@ load(file=gh('LTBI/data/rnra.Rdata'))
 ## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
 ## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
 rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
-rnra[,prog.recent1:=rbeta(nrow(rnra),shape1=A1,shape2=B1)]
-rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
+rnra <- rnra[order(mixing,replicate,iso3,age)]
+## ensure paired over mixing:
+rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
+rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
+rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
+rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
+## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
 ## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
 
-rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
+tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
+rnra[,prog.slow:=tmp]
+## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
 
 ## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
 rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
@@ -252,8 +259,8 @@ plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth,
   ## geom_errorbar(width=0,col=2,position = dog)+ #NOTE tricky to dodge and unhelpful global
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
 
-ggsave(plt,file=here('plots/Ibar.pdf'),h=7,w=14)
-ggsave(plt,file=here('plots/Ibar.png'),h=7,w=14)
+ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
+ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
 
