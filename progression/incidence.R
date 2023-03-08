@@ -16,6 +16,9 @@ rd <- function(x) formatC(round(x),big.mark = ",",format='d')
 rd(1); rd(1234); rd(1e9)
 fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
 gh <- function(x) glue(here(x))
+rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+load(here('progression/data/ckey.Rdata'))
 
 
 ## Martinez 2-year progression rates:
@@ -196,26 +199,6 @@ smy2[,method:='with risk factors']
 smy2[grepl('0',variable),method:='without risk factors']
 smy2[,variable:=gsub('0','',variable)]
 smy2 <- dcast(smy2,iso3+acat+notified+method + mixing ~ variable,value.var = 'value')
-
-## ## plot
-## m <- 1e6*0.75
-## plt <- ggplot(smy2,aes(x=notified,y=inc.num.mid,
-##                       ymin=inc.num.lo,ymax=inc.num.hi,
-##                       label=iso3,shape=mixing,
-##                       col=method)) +
-##   geom_point(size=2) +
-##   geom_errorbar(width=10,alpha=0.75)+
-##   geom_text_repel(show.legend = FALSE)+
-##   scale_x_sqrt(limits=c(0,m),label=comma)+
-##   scale_y_sqrt(limits=c(0,m),label=comma)+
-##   geom_abline(slope=1,intercept = 0,col=2)+
-##   facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
-##   ylab('Estimated incidence 2019 (sqrt scale)')+
-##   xlab('Notified TB 2019 (sqrt scale)')+
-##   theme_light()+theme(legend.position = 'top')
-## plt
-
-load(here('progression/data/ckey.Rdata'))
 smy2 <- merge(smy2,ckey,by = 'iso3',all.x=TRUE)
 
 
@@ -234,7 +217,7 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
                     arrows = arrow(type = 'closed',length = unit(0.07, "inches")))+
   geom_point(size=2,shape=1) +
   geom_errorbar(width=10,alpha=0.75)+
-  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = 1e2)+
+  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = 1e2,nudge_y = 20)+
   scale_x_sqrt(limits=c(0,m),label=comma)+
   scale_y_sqrt(limits=c(0,m),label=comma)+
   scale_fill_colorblind(name=NULL)+
@@ -248,6 +231,30 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
 
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
+
+
+## barplot version
+smy2[,fmeth:=paste0(method,', ',mixing)]
+smy2[is.na(newcountry),newcountry:='TOTAL']
+cnys <- unique(smy2$newcountry)
+cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
+smy2$newcountry <- factor(smy2$newcountry,levels=cnys,ordered = TRUE)
+dog <- position_dodge()
+
+plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth,
+                       ymax=inc.num.hi,ymin=inc.num.lo))+
+  geom_bar(stat='identity',position = dog)+
+  facet_wrap(~newcountry,scales='free')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019')+
+  ## geom_errorbar(width=0,col=2,position = dog)+ #NOTE tricky to dodge and unhelpful global
+  theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
+
+ggsave(plt,file=here('plots/Ibar.pdf'),h=7,w=14)
+ggsave(plt,file=here('plots/Ibar.png'),h=7,w=14)
+
 
 
 ## quick compare with KS data
@@ -306,7 +313,4 @@ load('~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.Rdata')
 
 ## TODO list
 ## check prog factor
-## compare snow, compare IHME?
-## include w/ and w/o mixing
-## go back over checks in LTBI code
 ## check snow comparison
