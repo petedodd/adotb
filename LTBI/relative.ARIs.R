@@ -17,7 +17,7 @@ CD <- synthetic_contacts_2020[location_contact=="all",
 
 ## --- TB estimates
 ## read in WHO age-specific incidence
-E <- fread('~/Dropbox/Documents/WHO_TBreports/data2020/TB_burden_age_sex_2020-10-15.csv')
+E <- fread(here('rawdata/TB_burden_age_sex_2020-10-15.csv'))
 E[,unique(age_group)]
 exa <- c('all','0-14',"15plus","18plus") #exlude age groups
 E <- E[!age_group %in% exa & risk_factor=='all',
