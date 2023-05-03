@@ -8,6 +8,7 @@ library(ggrepel)
 library(glue)
 library(HEdtree)
 library(ggarchery)
+library(ungeviz)
 
 ## utility functions
 hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
@@ -248,16 +249,19 @@ cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
 smy2$newcountry <- factor(smy2$newcountry,levels=cnys,ordered = TRUE)
 dog <- position_dodge()
 
-plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth,
-                       ymax=inc.num.hi,ymin=inc.num.lo))+
+## ymax=inc.num.hi,ymin=inc.num.lo
+## geom_errorbar(width=0,col=2,position = dog)+ #NOTE tricky to dodge and unhelpful global
+plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth))+
   geom_bar(stat='identity',position = dog)+
-  facet_wrap(~newcountry,scales='free')+
+  geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
+  facet_wrap(~newcountry,scales='free_y')+
   scale_fill_colorblind(name=NULL)+
   scale_y_continuous(label = comma)+
   xlab('Age group (years)')+
   ylab('Tuberculosis incidence 2019')+
-  ## geom_errorbar(width=0,col=2,position = dog)+ #NOTE tricky to dodge and unhelpful global
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
+plt
 
 ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
