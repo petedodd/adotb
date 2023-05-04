@@ -279,11 +279,51 @@ IIT <- IIT[,.(acat,fmeth='IHME',inc.num.mid=ihme,
               inc.num.lo=ihme-1.96*ihme.sd,
               inc.num.hi=ihme+1.96*ihme.sd)]
 
-## ours
+## snow approach, same splits
+## ========== active TB =======
+fn <- gh('rawdata/TB_burden_age_sex_2020-10-15.csv')
+snow <- fread(fn)
+exa <- c('0-14','15plus','all')
+ado <- c('0-4','5-14','15-24')
+snow[,V:=((hi-lo)/3.92)^2]
+
+## sanity checks
+snow[sex!='a',]
+snow[sex!='a' & !age_group %in% exa ,sum(best)*1e-6]    #yup
+
+## extract
+snowC <- snow[sex!='a' & age_group %in% ado[-1]  & iso3 %in% ckey$iso3,
+          .(incidence=1.0*sum(best),V=1.0*sum(V)),by=.(age_group,iso3)]
+
+
+## Kathryn Snow split
+## kids
+kidf <- 0.206
+snowC[age_group %in% c('5-14'),c('incidence','V'):=.(incidence*kidf,V*kidf)]
+
+## older
+adof <- (0.300 + 0.454)/2## 0.3
+snowC[age_group %in% c('15-24'),c('incidence','V'):=.(incidence*adof,V*adof)]
+
+snowC[,acat:=ifelse(age_group=='5-14','10-14','15-19')]
+snowC[,c('age_group'):=NULL]
+
+## check
+snowC[,.(sum(incidence)*1e-6),by=acat] #yup
+
+## make total
+snowCT <- snowC[,.(inc.num.mid=sum(incidence),V=sum(V)),by=acat]
+snowCT <- snowCT[,.(acat,fmeth='Snow',inc.num.mid,
+                    inc.num.lo=inc.num.mid-1.96*sqrt(V),
+                    inc.num.hi=inc.num.mid+1.96*sqrt(V))]
+
+
+## ==== ours
 TCF <- smy2[newcountry=='TOTAL',.(acat,fmeth,inc.num.mid,inc.num.lo,inc.num.hi)]
 
 ## combine
 TCF <- rbind(TCF,IIT)
+TCF <- rbind(TCF,snowCT)
 
 TCF[,txt:=fmt(inc.num.mid, inc.num.lo, inc.num.hi)]
 TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
@@ -291,7 +331,7 @@ TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
 setcolorder(TCFe,c('acat',
                    'with risk factors, assortative','with risk factors, random',
                    'without risk factors, assortative','without risk factors, random',
-                   'IHME'))
+                   'IHME','Snow'))
 
 fn <- gh('outdata/cftab.csv')
 fwrite(TCFe,file=fn)
