@@ -11,6 +11,7 @@ library(ggarchery)
 library(ungeviz)
 
 ## utility functions
+ssum <- function(x) sqrt(sum(x^2))
 hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
@@ -267,6 +268,35 @@ ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
+## comparison table for totals
+II <- fread(gh('rawdata/IHME-GBD_2019_DATA-6d1c5bfb-1.csv'))
+II <- merge(II,ckey,by.x='location_name',by.y='ihme',all.x=TRUE)
+II[,isd:=(upper-lower)/3.92]
+II[,acat:=gsub(' years','',age_name)]
+II <- II[,.(ihme=sum(val),ihme.sd=ssum(isd)),by=.(iso3,newcountry,acat)]
+IIT <- II[,.(ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=acat]
+IIT <- IIT[,.(acat,fmeth='IHME',inc.num.mid=ihme,
+              inc.num.lo=ihme-1.96*ihme.sd,
+              inc.num.hi=ihme+1.96*ihme.sd)]
+
+## ours
+TCF <- smy2[newcountry=='TOTAL',.(acat,fmeth,inc.num.mid,inc.num.lo,inc.num.hi)]
+
+## combine
+TCF <- rbind(TCF,IIT)
+
+TCF[,txt:=fmt(inc.num.mid, inc.num.lo, inc.num.hi)]
+TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
+
+setcolorder(TCFe,c('acat',
+                   'with risk factors, assortative','with risk factors, random',
+                   'without risk factors, assortative','without risk factors, random',
+                   'IHME'))
+
+fn <- gh('outdata/cftab.csv')
+fwrite(TCFe,file=fn)
+
+## TODO improve sfs in above
 
 ## quick compare with KS data
 load('~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.Rdata')
