@@ -291,6 +291,7 @@ snow <- fread(fn)
 exa <- c('0-14','15plus','all')
 ado <- c('0-4','5-14','15-24')
 snow[,V:=((hi-lo)/3.92)^2]
+allage <- copy(snow)
 
 ## sanity checks
 snow[sex!='a',]
@@ -397,8 +398,7 @@ ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
   coord_flip()+
   expand_limits(y=0)+
   xlab('Ratio relative to random mixing & no risk factors')+
-  theme(legend.position =  'top',legend.title = element_blank() )## +
-  ## guides(col=guide_legend(ncol=2),shape=guide_legend(ncol=2))
+  theme(legend.position =  'top',legend.title = element_blank() )
 
 
 ggsave(file=here('plots/ratio_method.png'),h=5,w=7)
@@ -416,4 +416,25 @@ ggplot(rats2,aes(x=iso3,y=`ratio by age category`)) +
 
 ggsave(file=here('plots/ratio_age.png'),h=5,w=5)
 
+## against mean age of TB
+allage <- allage[risk_factor=='all' & sex!='a' & 
+                 !age_group %in% c('all','0-14','15plus','18plus'),
+                 .(iso3,sex,age_group,best,V)]
 
+allage <- allage[,.(best=sum(best)),by=.(iso3,age_group)]
+allage[,agemid:=as.numeric(gsub('(.*)-(.*)','\\1',age_group))]
+allage[,agetop:=as.numeric(gsub('(.*)-(.*)','\\2',age_group))]
+allage[is.na(agemid),agemid:=65]
+allage[is.na(agetop),agetop:=70]
+allage[,agemid:=(agemid+agetop+1)/2]
+meanage <- allage[,.(`mean age of TB`=weighted.mean(agemid,best)),by=iso3]
+
+rats2 <- merge(rats2,meanage,by='iso3',all.x = TRUE,all.y=FALSE)
+
+ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
+  ## geom_smooth(method = 'lm')+
+  geom_point(size=2)+
+  geom_text_repel()
+
+
+ggsave(file=here('plots/ratio_age_scatter.png'),h=5,w=5)
