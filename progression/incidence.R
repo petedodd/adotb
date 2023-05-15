@@ -344,60 +344,76 @@ fwrite(TCFe,file=fn)
 print(TCFe)
 
 
-## quick compare with KS data
-load('~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.Rdata')
+## country-level comparisons
+CC <- list()
+CC[[1]] <- snowC[,.(iso3,acat,method='Snow',incidence,
+                    incidence.lo=pmax(0,incidence-1.96*sqrt(V)),incidence.hi=incidence+1.96*sqrt(V))]
+CC[[2]] <- II[,.(iso3,acat,method='IHME',incidence=ihme,
+                 incidence.lo=pmax(0,ihme-1.96*ihme.sd),incidence.hi=ihme+1.96*ihme.sd)]
+CC[[3]] <- smy2[newcountry!='TOTAL',.(iso3,acat,method=fmeth,incidence=inc.num.mid,
+                           incidence.lo=inc.num.lo,incidence.hi=inc.num.hi)]
+CC <- rbindlist(CC)
+addon <- CC[method=='with risk factors, assortative',.(iso3,acat,ref=incidence)]
+CC <- merge(CC,addon,by=c('iso3','acat'),all.x=TRUE)
+CC[,iso3t:=ifelse(method=='IHME',iso3,'')]
 
-## TBC
-## smy2
+M <- 5e5
+plt <- ggplot(CC,aes(ref,incidence,ymin=incidence.lo,ymax=incidence.hi,
+              col=method,shape=method,label=iso3t))+
+  geom_point(size=2,shape=1) +
+  geom_errorbar(width=10,alpha=0.75)+
+  facet_wrap(~acat)+coord_fixed()+
+  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = -12,nudge_y = 50,alpha=0.5)+
+  scale_y_sqrt(limits=c(0,M),label=comma)+scale_x_sqrt(limits=c(0,M),label=comma)+
+  scale_color_colorblind(name=NULL)+
+  geom_abline(intercept = 0,slope=1,col=2)+
+  ylab('Estimated tuberculosis incidence 2019 (sqrt scale)')+
+  xlab('Reference estimate (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+plt
 
-## smy2 <- merge(smy2,TBC[,.(iso3,KSI=incidence,acat)],
-##               by=c('iso3','acat'),all.x=TRUE,all.y=FALSE)
-
-## plt <- ggplot(smy2,aes(x=KSI,y=inc.num.mid,
-##                 ymin=inc.num.lo,ymax=inc.num.hi,
-##                 label=iso3,col=method)) +
-##   geom_point(shape=1,size=2) +
-##   geom_errorbar(width=10,alpha=0.75)+
-##   geom_text_repel(show.legend = FALSE)+
-##   scale_x_sqrt(limits=c(0,m),label=comma)+
-##   scale_y_sqrt(limits=c(0,m),label=comma)+
-##   geom_abline(slope=1,intercept = 0,col=2)+
-##   facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
-##   ylab('Estimated incidence 2019 (sqrt scale)')+
-##   xlab('KS estimate TB 2017 (sqrt scale)')+
-##   theme_light()+theme(legend.position = 'top')
-## plt
-
-## ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC2.png')
-
-## tmp <- smy2[iso3!='TOTAL',.(Snow=sum(KSI)/1e6,prog=sum(inc.num.mid)/1e6),by=.(acat,method,mixing)]
-## tmp
-## fwrite(tmp,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/tbc.csv')
-
-## ## comparison of totals
-## tot <- smy2[iso3!='TOTAL',.(snowtot=sum(KSI),inc=sum(inc.num.mid)),by=.(acat,method,mixing)]
-## tot[,inc/snowtot]
-## tot <- smy2[iso3!='TOTAL',.(snowtot=sum(KSI),inc=sum(inc.num.mid)),by=.(method,mixing)]
-## tot[,inc/snowtot]
+fac <- 2
+WW <- 10
+ggsave(plt,file=here('plots/IvE.pdf'),h=WW,w=fac*WW)
+ggsave(plt,file=here('plots/IvE.png'),h=WW,w=fac*WW)
 
 
-## m <- 1e6*0.75
-## plt <- ggplot(smy2,aes(x=notified,y=KSI,
-##                        label=iso3,col=method)) +
-##   geom_point(shape=1,size=2) +
-##   geom_text_repel(show.legend = FALSE)+
-##   scale_x_sqrt(limits=c(0,m),label=comma)+
-##   scale_y_sqrt(limits=c(0,m),label=comma)+
-##   geom_abline(slope=1,intercept = 0,col=2)+
-##   facet_wrap(~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
-##   ylab('KSI 2017 (sqrt scale)')+
-##   xlab('Notified TB 2019 (sqrt scale)')+
-##   theme_light()+theme(legend.position = 'top')
-## plt
+## ratio by country: old to young; effect of mixing
 
-## ggsave(plt,file='~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC2.png')
+rats <- smy2[newcountry!='TOTAL',.(iso3,acat,method=fmeth,incidence=inc.num.mid,
+                                      incidence.lo=inc.num.lo,incidence.hi=inc.num.hi)]
+
+rats1 <- dcast(rats,iso3+acat~method,value.var = 'incidence')
+rats1 <- rats1[acat=='15-19',.(iso3,
+ `with risk factors, assortative` = `with risk factors, assortative` / `without risk factors, random`,
+ `without risk factors, assortative` = `without risk factors, assortative` / `without risk factors, random`,
+ `with risk factors, random` = `with risk factors, random` / `without risk factors, random`)]
+
+ratsm <- melt(rats1,id='iso3')
+
+ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
+  geom_hline(yintercept = 1,col=2)+
+  geom_point(size=2)+
+  coord_flip()+
+  expand_limits(y=0)+
+  xlab('Ratio relative to random mixing & no risk factors')+
+  theme(legend.position =  'top',legend.title = element_blank() )## +
+  ## guides(col=guide_legend(ncol=2),shape=guide_legend(ncol=2))
 
 
-## TODO list
-## check prog factor
-## check snow comparison
+ggsave(file=here('plots/ratio_method.png'),h=5,w=7)
+
+
+## age ratios
+rats2 <- dcast(rats[method=='with risk factors, assortative'],iso3~acat,value.var = 'incidence')
+rats2[,`ratio by age category`:=`15-19`/`10-14`]
+
+ggplot(rats2,aes(x=iso3,y=`ratio by age category`)) +
+  geom_hline(yintercept = 1,col=2)+
+  geom_point(size=2)+
+  geom_segment(aes(xend=iso3,y=0,yend=`ratio by age category`))+
+  coord_flip()
+
+ggsave(file=here('plots/ratio_age.png'),h=5,w=5)
+
+
