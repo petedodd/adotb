@@ -397,7 +397,7 @@ ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
   geom_point(size=2)+
   coord_flip()+
   expand_limits(y=0)+
-  xlab('Ratio relative to random mixing & no risk factors')+
+  ylab('Ratio relative to random mixing & no risk factors')+
   theme(legend.position =  'top',legend.title = element_blank() )
 
 
