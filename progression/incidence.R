@@ -1,3 +1,4 @@
+## TODO more reps?
 ## using previous outputs to compute incidence
 library(here)
 library(data.table)
@@ -16,7 +17,18 @@ hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
 rd(1); rd(1234); rd(1e9)
+rdb <- function(x) format(
+                     signif(x,3),
+                     digits = 3,
+                     nsmall = 0L,
+                     big.mark = " ",
+                     justify = 'right',
+                     drop0trailing = TRUE,
+                     scientific = FALSE
+                   )
+rdb(1); rdb(123456); rdb(1e9)
 fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
+fmtb <- function(x,y,z) paste0(rdb(x)," (",rdb(y)," to ",rdb(z),")")
 gh <- function(x) glue(here(x))
 rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -117,32 +129,6 @@ rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)]
 rnr[,inc.num:=inc*value]
 
 
-## TODO check uncertainty
-## TOTAL
-rnrtot <- rnr[,.(P=weighted.mean(P,value),
-                 P1=weighted.mean(P1,value),
-                 P2=weighted.mean(P2,value),
-                 inc0=weighted.mean(inc0,value),
-                 inc=weighted.mean(inc,value),
-                 LTBI=sum(LTBI),
-                 LTBI1=sum(LTBI1),
-                 LTBI2=sum(LTBI2),
-                 inc.num0=sum(inc.num0),
-                 inc.num=sum(inc.num),
-                 value=sum(value)
-                 ), by=.(acat,replicate,mixing)]
-rnrtot[,iso3:='TOTAL']
-names(rnr)
-
-(tnmz <- names(rnrtot))
-rnr <- rbind(rnr[,..tnmz],rnrtot) #TODO
-lvls <- rnr[,unique(iso3)]
-lvls <- lvls[lvls!='TOTAL']
-lvls <- sort(as.character(lvls))
-lvls <- c(lvls,'TOTAL')
-rnr$iso3 <- factor(rnr$iso3,levels=lvls,ordered = TRUE)
-
-
 ## summarize
 rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 LTBI.mid=mean(LTBI),
@@ -162,33 +148,52 @@ rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 ),
              by=.(iso3,acat,mixing)] #mean/hi/lo
 
-smy <- rnrss[,.(iso3,acat,mixing,
-                LTBI.mid,LTBI.lo,LTBI.hi,
-                inc.num0.mid,inc.num0.lo,inc.num0.hi,
-                inc.num.mid,inc.num.lo,inc.num.hi,
-                LTBI1.mid,LTBI1.lo,LTBI1.hi,
-                LTBI2.mid,LTBI2.lo,LTBI2.hi,
-                inc.mid,inc.lo,inc.hi,
-                inc0.mid,inc0.lo,inc0.hi
-                )]
-smy[,LTBI.fmt:=fmt(LTBI.mid,LTBI.lo,LTBI.hi)]
-smy[,inc.num0.fmt:=fmt(inc.num0.mid,inc.num0.lo,inc.num0.hi)]
-smy[,inc.num.fmt:=fmt(inc.num.mid,inc.num.lo,inc.num.hi)]
+## LTBI TOTAL
+rnrtot <- rnr[,.(P=weighted.mean(P,value),
+                 P1=weighted.mean(P1,value),
+                 P2=weighted.mean(P2,value),
+                 LTBI=sum(LTBI),
+                 LTBI1=sum(LTBI1),
+                 LTBI2=sum(LTBI2)
+                 ), by=.(acat,replicate,mixing)]
+rnrtot <- rnrtot[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
+                    LTBI.mid=mean(LTBI),LTBI1.mid=mean(LTBI1),LTBI2.mid=mean(LTBI2),
+                    P.lo=lo(P),P1.lo=lo(P1),P2.lo=lo(P2),
+                    LTBI.lo=lo(LTBI),LTBI1.lo=lo(LTBI1),LTBI2.lo=lo(LTBI2),
+                    P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
+                    LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
+                 by=.(acat,mixing)]
+## inc totals
+rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
+                    inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
+                    inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
+         ),by=.(acat,mixing)]
+rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
+           .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
+             inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
+rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
+rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
+rnrtot[,iso3:='TOTAL']
+
+(tnmz <- names(rnrtot))
+smy <- rbind(rnrss[,..tnmz],rnrtot) #TODO
+lvls <- rnr[,unique(iso3)]
+lvls <- lvls[lvls!='TOTAL']
+lvls <- sort(as.character(lvls))
+lvls <- c(lvls,'TOTAL')
+smy$iso3 <- factor(smy$iso3,levels=lvls,ordered = TRUE)
+
+smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi)]
+smy[,inc.num0.fmt:=fmtb(inc.num0.mid,inc.num0.lo,inc.num0.hi)]
+smy[,inc.num.fmt:=fmtb(inc.num.mid,inc.num.lo,inc.num.hi)]
 smy[,.(iso3,acat,LTBI.fmt,inc.num0.fmt,inc.num.fmt)]
 smys <- smy[,.(iso3,mixing,acat,LTBI.fmt,
                inc.num0.fmt,inc.num.fmt,
               LTBI.mid,LTBI.lo,LTBI.hi,
               inc.num0.mid,inc.num0.lo,inc.num0.hi,
               inc.num.mid,inc.num.lo,inc.num.hi)]
+
 print(smy[iso3=='TOTAL' & mixing=='assortative',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
-
-## fwrite(smy,file=gh('outdata/smy.csv')) #
-## save(smy,file=gh('progression/data/smy.Rdata'))
-
-## 2%
-## smold <- fread(gh('outdata/smy.csv'))
-## smy[iso3=='TOTAL' & mixing=='assortative',sum(inc.num.mid)/1e6]/
-##   smold[iso3=='TOTAL' & mixing=='assortative',sum(inc.num.mid)/1e6]
 
 smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
 smy[,CDR0:=1e2*notified/inc.num0.mid]
@@ -325,7 +330,7 @@ TCF <- smy2[newcountry=='TOTAL',.(acat,fmeth,inc.num.mid,inc.num.lo,inc.num.hi)]
 TCF <- rbind(TCF,IIT)
 TCF <- rbind(TCF,snowCT)
 
-TCF[,txt:=fmt(inc.num.mid, inc.num.lo, inc.num.hi)]
+TCF[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
 TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
 
 setcolorder(TCFe,c('acat',
@@ -336,7 +341,8 @@ setcolorder(TCFe,c('acat',
 fn <- gh('outdata/cftab.csv')
 fwrite(TCFe,file=fn)
 
-## TODO improve sfs in above
+print(TCFe)
+
 
 ## quick compare with KS data
 load('~/Dropbox/Documents/comms/KatharinaKranzer/ado2/graphs/TBC.Rdata')
