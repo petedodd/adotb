@@ -173,21 +173,37 @@ RR <- rbindlist(RR)
 
 save(RR,file=here('LTBI/data/RR.Rdata'))
 
+
+load(file=here('LTBI/data/RR.Rdata'))
+load(here('rawdata/ckey.Rdata'))
+
 ## look
 RR <- merge(RR,whokey,by='iso3',all.x = TRUE)
+RR[,WLC:=ifelse(iso3 %in% ckey$iso3,TRUE,FALSE)]
 
-
-
-
-GP <- ggplot(RR,aes(iso3,rr))+
+GP <- ggplot(RR,aes(iso3,rr,col=WLC))+
   geom_point()+
+  scale_color_manual(values = c('TRUE'='red','FALSE'='black'))+
   facet_wrap(~g_whoregion,scales='free')+
   coord_flip()+
   geom_hline(yintercept=1,col=2)+
   xlab('Country')+
   ylab('Relative ARI')+
-  ggtitle('RR age 17.5 vs 12.5')
-## GP
+  ggtitle('RR age 17.5 vs 12.5')+
+  theme(legend.position = 'none')
+GP
 
 ggsave(GP,file=here('plots/ARI_step4_RR.pdf'),w=12,h=10)
 ggsave(GP,file=here('plots/ARI_step4_RR.png'),w=12,h=10)
+
+## which ones are in our list?
+RRR <- RR[WLC==TRUE]
+fwrite(RRR[,.(iso3,rr)],file=here('LTBI/data/RR.csv'))
+
+RRstats <- RRR[,.(mn=mean(rr),md=median(rr),s=sd(rr),
+                  bot=min(rr),top=max(rr),
+                  botc=iso3[which.min(rr)], topc=iso3[which.max(rr)],
+                  UQ=quantile(rr,0.75),LQ=quantile(rr,0.25))]
+RRstats
+
+fwrite(RRstats,file=here('LTBI/data/RRstats.csv'))
