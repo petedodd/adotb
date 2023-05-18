@@ -11,8 +11,21 @@ library(ggrepel)
 hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
+rd1 <- function(x) round(x,digits = 1)
 rd(1); rd(1234); rd(1e9)
 fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
+fmt1 <- function(x,y,z) paste0(rd1(x)," (",rd1(y)," to ",rd1(z),")")
+rdb <- function(x) format(
+                     signif(x,3),
+                     digits = 3,
+                     nsmall = 0L,
+                     big.mark = " ",
+                     justify = 'right',
+                     drop0trailing = TRUE,
+                     scientific = FALSE
+                   )
+rdb(1); rdb(123456); rdb(1e9)
+fmtb <- function(x,y,z) paste0(rdb(x)," (",rdb(y)," to ",rdb(z),")")
 gh <- function(x) glue(here(x))
 cbPalette <- c("#000000", "#E69F00", "#56B4E9","#009E73",
                "#F0E442", "#0072B2","#D55E00", "#CC79A7")
@@ -145,3 +158,50 @@ table(rnra$acat) #OK
 rnra$acat <- factor(rnra$acat,levels=c('10-14','15-19'),ordered = TRUE)
 
 save(rnra,file=gh('LTBI/data/rnra.Rdata'))
+
+## NOTE some of this is repeated in progression/incidence.R
+## additional outputs
+load(file=gh('LTBI/data/rnra.Rdata'))
+load(gh('PAF/data/IRR.Rdata'))
+popn <- unique(IRR[,.(iso3,acat,pop)])
+
+rnra <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2)),by=.(iso3,mixing,replicate,acat)] #over ages
+rnra <- merge(rnra,popn,by=c('iso3','acat'))
+rnr <- rnra[,.(P=weighted.mean(P,pop),
+               P1=weighted.mean(P1,pop),
+               P2=weighted.mean(P2,pop),
+               pop=sum(pop)),by=.(iso3,mixing,replicate)] #no age
+rnrc <- rnr[,.(P=1e2*mean(P),
+               P1=1e2*mean(P1),
+               P2=1e2*mean(P2)),by=.(iso3,mixing)] #for country variation
+rnrtota <- rnra[,.(P=1e2*weighted.mean(P,pop),
+                   P1=1e2*weighted.mean(P1,pop),
+                   P2=1e2*weighted.mean(P2,pop),
+                   TBI=sum(P*pop),
+                   TBI1=sum(P1*pop),
+                   TBI2=sum(P2*pop)),by=.(mixing,replicate,acat)] #with age
+rnrtot <- rnra[,.(P=1e2*weighted.mean(P,pop),
+                   P1=1e2*weighted.mean(P1,pop),
+                   P2=1e2*weighted.mean(P2,pop),
+                   TBI=sum(P*pop),
+                   TBI1=sum(P1*pop),
+                   TBI2=sum(P2*pop)),by=.(mixing,replicate)] #w/o age
+
+## outputs
+rnrtotasPC <- rnrtota[,lapply(.SD,function(x) fmt1(mean(x),lo(x),hi(x))),
+                    by=.(mixing,acat),.SDcols=c('P','P1','P2')]
+rnrtotasN <- rnrtota[,lapply(.SD,function(x) fmtb(mean(x),lo(x),hi(x))),
+                      by=.(mixing,acat),.SDcols=c('TBI','TBI1','TBI2')]
+rnrtotsPC <- rnrtot[,lapply(.SD,function(x) fmt1(mean(x),lo(x),hi(x))),
+                      by=.(mixing),.SDcols=c('P','P1','P2')]
+rnrtotsN <- rnrtot[,lapply(.SD,function(x) fmtb(mean(x),lo(x),hi(x))),
+                     by=.(mixing),.SDcols=c('TBI','TBI1','TBI2')]
+ltbi.crange <- rnrc[,.(Pmin=min(P),Pmax=max(P),
+                       Cmin=iso3[which.min(P)],Cmax=iso3[which.max(P)]),
+                    by=mixing]
+
+fwrite(rnrtotasPC,file=gh('outdata/ltbi.PC.age.csv'))
+fwrite(rnrtotasN,file=gh('outdata/ltbi.tot.age.csv'))
+fwrite(rnrtotsPC,file=gh('outdata/ltbi.PC.noage.csv'))
+fwrite(rnrtotsN,file=gh('outdata/ltbi.tot.noage.csv'))
+fwrite(ltbi.crange,file=gh('outdata/ltbi.crange.csv'))

@@ -206,4 +206,4 @@ RRstats <- RRR[,.(mn=mean(rr),md=median(rr),s=sd(rr),
                   UQ=quantile(rr,0.75),LQ=quantile(rr,0.25))]
 RRstats
 
-fwrite(RRstats,file=here('LTBI/data/RRstats.csv'))
+fwrite(RRstats,file=here('outdata/RRstats.csv'))
