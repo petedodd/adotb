@@ -438,3 +438,25 @@ ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
 
 
 ggsave(file=here('plots/ratio_age_scatter.png'),h=5,w=5)
+
+
+nrts <- merge(rats[method=='with risk factors, assortative',.(iso3,acat,incidence)],
+              unique(IRR[,.(iso3,acat,pop)]),by=c('iso3','acat'))
+
+nrts[,pci:=1e5*incidence/pop]
+
+rrdata <- fread(gh('LTBI/data/RR.csv'))
+
+nrts2 <- dcast(nrts,iso3~acat,value.var = 'pci')
+nrts2[,pciratio:=`15-19`/`10-14`]
+nrts2 <- merge(nrts2,rrdata,by='iso3')
+
+ggplot(nrts2,aes(rr,pciratio,label=iso3))+
+  geom_point(size=2)+
+  geom_text_repel()+
+  xlab('Estimated infection risk ratio for 15-19 vs 10-14 year olds')+
+  ylab('Ratio in estimated per capita TB incidence for 15-19 vs 10-14 year olds')+
+  theme_classic()+ggpubr::grids()
+
+
+ggsave(file=here('plots/ratio_pcivRR_scatter.png'),h=7,w=7)
