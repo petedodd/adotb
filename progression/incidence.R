@@ -16,6 +16,7 @@ ssum <- function(x) sqrt(sum(x^2))
 hi <- function(x,p=0.05) quantile(x,probs=1-p/2)
 lo <- function(x,p=0.05) quantile(x,probs=p/2)
 rd <- function(x) formatC(round(x),big.mark = ",",format='d')
+rd1 <- function(x) format(round(x,1),nsmall = 1)
 rd(1); rd(1234); rd(1e9)
 rdb <- function(x) format(
                      signif(x,3),
@@ -29,6 +30,7 @@ rdb <- function(x) format(
 rdb(1); rdb(123456); rdb(1e9)
 fmt <- function(x,y,z) paste0(rd(x)," (",rd(y)," to ",rd(z),")")
 fmtb <- function(x,y,z) paste0(rdb(x)," (",rdb(y)," to ",rdb(z),")")
+fmt1 <- function(x,y,z) paste0(rd1(x)," (",rd1(y)," to ",rd1(z),")")
 gh <- function(x) glue(here(x))
 rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -272,6 +274,23 @@ plt
 ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
+
+## percentages
+## dQ/Q=dlog(A/B) = dA/A + dB/B
+PC <- rnrss[mixing=='assortative',
+            .(iso3,acat,inc.num.mid,dAoA=abs(inc.num.lo-inc.num.hi)/inc.num.mid/3.92)]
+pct <- rnrtot[mixing=='assortative',
+              .(acat,tot=inc.num.mid,dBoB=abs(inc.num.lo-inc.num.hi)/inc.num.mid/3.92)]
+PC <- merge(PC,pct,by=c('acat'),all.x=TRUE,all.y=FALSE)
+PC[,pc:=1e2*inc.num.mid/tot]
+PC[,pc.sd:=pc*sqrt(dAoA^2+dBoB^2)]
+PC[,pc.lo:=pc-1.96*pc.sd]
+PC[,pc.hi:=pc+1.96*pc.sd]
+PC[,percentage:=fmt1(pc,pc.lo,pc.hi)]
+youngpc <- PC[acat=='10-14'][order(pc,decreasing=TRUE),.(iso3,percentage)]
+oldpc <- PC[acat=='15-19'][order(pc,decreasing=TRUE),.(iso3,percentage)]
+fwrite(youngpc,file=gh('outdata/PC_ranked_1014.csv'))
+fwrite(oldpc,file=gh('outdata/PC_ranked_1519.csv'))
 
 ## comparison table for totals
 II <- fread(gh('rawdata/IHME-GBD_2019_DATA-6d1c5bfb-1.csv'))
