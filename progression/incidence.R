@@ -34,6 +34,8 @@ fmt1 <- function(x,y,z) paste0(rd1(x)," (",rd1(y)," to ",rd1(z),")")
 gh <- function(x) glue(here(x))
 rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+set.seed(1234)
+
 load(here('progression/data/ckey.Rdata'))
 
 
@@ -204,6 +206,38 @@ smy[,CDR:=1e2*notified/inc.num.mid]
 (tmp <- smy[!is.na(CDR),.(iso3,mixing,acat,CDR0,CDR)][order(mixing)])
 
 fwrite(tmp,file=gh('outdata/CDR.csv'))
+fwrite(smy,file=gh('outdata/smy.csv'))
+
+## reformat
+smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi )]
+smy[,LTBI1.fmt:=fmtb(LTBI1.mid,LTBI1.lo,LTBI1.hi )]
+smy[,LTBI2.fmt:=fmtb(LTBI2.mid,LTBI2.lo,LTBI2.hi )]
+
+## LTBI output by country
+out.ltbi <- dcast(smy[mixing=='assortative'],
+                  iso3~acat,
+                  value.var = c('LTBI.fmt','LTBI1.fmt','LTBI2.fmt'))
+out.ltbi$iso3 <- factor(out.ltbi$iso3,levels=lvls,ordered = TRUE)
+setkey(out.ltbi,iso3)
+setcolorder(out.ltbi,c("iso3","LTBI.fmt_10-14","LTBI2.fmt_10-14","LTBI1.fmt_10-14",
+                                     "LTBI.fmt_15-19","LTBI2.fmt_15-19","LTBI1.fmt_15-19"))
+
+fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
+
+## incidence etc by country
+out.inc <- smy[,.(iso3,acat,mixing,inc.num.fmt,inc.num0.fmt,notified,CDR,CDR0)]
+out.inc <- melt(out.inc,id=c('iso3','acat','mixing'))
+out.inc[,RF:=ifelse(grepl('0',variable),'Without risk factors','With risk factors')]
+out.inc[,variable:=gsub('0','',variable)]
+out.inc <- dcast(out.inc,iso3+mixing+RF ~ variable + acat)
+out.inc$iso3 <- factor(out.inc$iso3,levels=lvls,ordered = TRUE)
+setkey(out.inc,iso3,mixing,RF)
+setcolorder(out.inc,c("iso3","mixing","RF",
+                      "inc.num.fmt_10-14","notified_10-14","CDR_10-14",
+                      "inc.num.fmt_15-19","notified_15-19","CDR_15-19"   ))
+
+fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
+
 
 ## reformat for plotting
 smy2 <- smy[,.(iso3,mixing,acat,notified,
@@ -273,6 +307,29 @@ plt
 
 ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
+
+
+## per capita version of Ibar
+pops <- unique(IRR[,.(iso3,acat,pop)])
+popst <- pops[,.(pop=sum(pop)),by=acat]
+popst[,iso3:='TOTAL']
+pops <- rbind(pops,popst)
+smy3 <- merge(smy2,pops,by=c('iso3','acat'),all.x=TRUE)
+
+plt <- ggplot(smy3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+  geom_bar(stat='identity',position = dog)+
+  geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+  facet_wrap(~newcountry,scales='free_y')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019 (per 100,000)')+
+  theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
+plt
+
+ggsave(plt,file=here('plots/IbarPC.pdf'),h=9,w=12)
+ggsave(plt,file=here('plots/IbarPC.png'),h=9,w=12)
 
 
 ## percentages
@@ -475,7 +532,8 @@ ggplot(nrts2,aes(rr,pciratio,label=iso3))+
   geom_text_repel()+
   xlab('Estimated infection risk ratio for 15-19 vs 10-14 year olds')+
   ylab('Ratio in estimated per capita TB incidence for 15-19 vs 10-14 year olds')+
-  theme_classic()+ggpubr::grids()
+  theme_classic()+ggpubr::grids()+
+  geom_abline(slope=1,intercept=0,col=2)
 
 
 ggsave(file=here('plots/ratio_pcivRR_scatter.png'),h=7,w=7)
