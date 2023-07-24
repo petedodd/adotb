@@ -208,6 +208,16 @@ smy[,CDR:=1e2*notified/inc.num.mid]
 fwrite(tmp,file=gh('outdata/CDR.csv'))
 fwrite(smy,file=gh('outdata/smy.csv'))
 
+## CDR stats for text
+cdry <- tmp[mixing=='assortative' & acat=='10-14']
+cdry <- cdry[order(CDR)]
+fwrite(cdry,file=gh('outdata/cdry.csv'))
+
+cdro <- tmp[mixing=='assortative' & acat=='15-19']
+cdro <- cdro[order(CDR)]
+fwrite(cdro,file=gh('outdata/cdro.csv'))
+
+
 ## reformat
 smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi )]
 smy[,LTBI1.fmt:=fmtb(LTBI1.mid,LTBI1.lo,LTBI1.hi )]
@@ -356,6 +366,8 @@ II[,isd:=(upper-lower)/3.92]
 II[,acat:=gsub(' years','',age_name)]
 II <- II[,.(ihme=sum(val),ihme.sd=ssum(isd)),by=.(iso3,newcountry,acat)]
 IIT <- II[,.(ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=acat]
+IIT2 <- IIT[,.(acat='10-19',ihme=sum(ihme),ihme.sd=ssum(ihme.sd))]
+IIT <- rbind(IIT,IIT2)
 IIT <- IIT[,.(acat,fmeth='IHME',inc.num.mid=ihme,
               inc.num.lo=ihme-1.96*ihme.sd,
               inc.num.hi=ihme+1.96*ihme.sd)]
@@ -395,6 +407,8 @@ snowC[,.(sum(incidence)*1e-6),by=acat] #yup
 
 ## make total
 snowCT <- snowC[,.(inc.num.mid=sum(incidence),V=sum(V)),by=acat]
+snowCT2 <- snowCT[,.(acat='10-19',inc.num.mid=sum(inc.num.mid),V=sum(V))]
+snowCT <- rbind(snowCT,snowCT2)
 snowCT <- snowCT[,.(acat,fmeth='Snow',inc.num.mid,
                     inc.num.lo=inc.num.mid-1.96*sqrt(V),
                     inc.num.hi=inc.num.mid+1.96*sqrt(V))]
@@ -402,6 +416,8 @@ snowCT <- snowCT[,.(acat,fmeth='Snow',inc.num.mid,
 
 ## ==== ours
 TCF <- smy2[newcountry=='TOTAL',.(acat,fmeth,inc.num.mid,inc.num.lo,inc.num.hi)]
+TCF2 <- TCF[,.(acat='10-19',inc=sum(inc.num.mid),inc.sdx=ssum(inc.num.hi-inc.num.lo)),by=fmeth]
+TCF <- rbind(TCF,TCF2[,.(acat,fmeth,inc.num.mid=inc,inc.num.lo=inc-inc.sdx/2,inc.num.hi=inc+inc.sdx/2)])
 
 ## combine
 TCF <- rbind(TCF,IIT)
@@ -409,6 +425,10 @@ TCF <- rbind(TCF,snowCT)
 
 TCF[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
 TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
+
+acata <- c('10-14','15-19','10-19')
+TCFe$acat <- factor(TCFe$acat,levels=acata,ordered=TRUE)
+setkey(TCFe,acat)
 
 setcolorder(TCFe,c('acat',
                    'with risk factors, assortative','with risk factors, random',
@@ -537,3 +557,29 @@ ggplot(nrts2,aes(rr,pciratio,label=iso3))+
 
 
 ggsave(file=here('plots/ratio_pcivRR_scatter.png'),h=7,w=7)
+
+
+
+## HIV/TB by region
+load(here('rawdata/whokey.Rdata'))
+PAF <- fread(here('outdata/PAF.csv'))
+PAF <- PAF[,.(iso3,yng=`hiv.PAF_10-14`,old=`hiv.PAF_15-19`)]
+getnum <- function(X) #get mid from string as num
+  as.numeric(unlist(lapply(X,function(x) strsplit(x,split=' ')[[1]][1])))
+PAF[,midy:=getnum(yng)]
+PAF[,mido:=getnum(old)]
+PAF <- melt(PAF[,.(iso3,`10-14`=midy/1e2,`15-19`=mido/1e2)],id='iso3')
+PAF <- PAF[,.(iso3,acat=variable,phiv=value)]
+nhiv <- merge(smy2[method=='with risk factors' & mixing=='assortative',
+                   .(iso3,acat,inc.num.mid,inc.num.sdw=inc.num.hi-inc.num.lo)],
+              PAF,
+              by=c('iso3','acat'))
+nhiv <- merge(nhiv,whokey,by='iso3',all.x=TRUE,all.y=FALSE)
+nhiva <- nhiv[,.(hivtb=sum(inc.num.mid*phiv),hivtb.w=ssum(inc.num.sdw*phiv)),by=.(acat,g_whoregion)]
+nhiv <- nhiv[,.(hivtb=sum(inc.num.mid*phiv),hivtb.w=ssum(inc.num.sdw*phiv)),by=.(g_whoregion)]
+nhiv <- rbind(nhiva,nhiv[,.(g_whoregion,acat='10-19',hivtb,hivtb.w)])
+nhiv[,c('hivtb.lo','hivtb.hi'):=.(pmax(0,hivtb-hivtb.w/2),hivtb+hivtb.w/2)]
+nhiv[,txt:=fmtb(as.integer(hivtb), as.integer(hivtb.lo), as.integer(hivtb.hi))]
+nhiv <- nhiv[order(acat,g_whoregion)]
+
+fwrite(nhiv[,.(acat,g_whoregion,txt)],file=here('outdata/nhiv.csv'))
