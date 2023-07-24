@@ -1,0 +1,125 @@
+iso3,mixing,RF,inc.num.fmt_10-14,notified_10-14,CDR_10-14,inc.num.fmt_15-19,notified_15-19,CDR_15-19
+AGO,assortative,With risk factors,  5 570 (  3 140 to   9 180),,,  5 880 (  3 770 to   8 930),,
+AGO,assortative,Without risk factors,  5 330 (  3 010 to   8 790),,,  5 520 (  3 550 to   8 320),,
+AGO,random,With risk factors,  5 570 (  3 130 to   9 190),,,  5 000 (  3 250 to   7 550),,
+AGO,random,Without risk factors,  5 330 (  3 010 to   8 800),,,  4 700 (  3 060 to   7 030),,
+BGD,assortative,With risk factors,  9 990 (  5 660 to  15 100),,, 19 000 (  9 620 to  30 500),,
+BGD,assortative,Without risk factors,  8 630 (  4 890 to  13 000),,, 16 400 (  8 320 to  26 300),,
+BGD,random,With risk factors,  9 980 (  5 660 to  15 100),,, 15 400 (  8 040 to  24 600),,
+BGD,random,Without risk factors,  8 620 (  4 900 to  13 000),,, 13 300 (  6 950 to  21 200),,
+BRA,assortative,With risk factors,  1 700 (   950 to   2 350),981,57.7964335721808,  3 410 (  2 220 to   4 700),4683,137.2164957492
+BRA,assortative,Without risk factors,  1 690 (   948 to   2 340),,57.9831060685065,  3 390 (  2 200 to   4 650),,138.199166876934
+BRA,random,With risk factors,  1 700 (   950 to   2 350),981,57.7986988455888,  2 260 (  1 490 to   3 020),4683,207.434658694164
+BRA,random,Without risk factors,  1 690 (   947 to   2 340),,57.9853798862589,  2 240 (  1 480 to   2 990),,208.914093820743
+CAF,assortative,With risk factors,  1 250 (   721 to   1 720),,,  1 440 (  1 020 to   2 080),,
+CAF,assortative,Without risk factors,  1 180 (   687 to   1 600),,,  1 340 (   955 to   1 940),,
+CAF,random,With risk factors,  1 250 (   721 to   1 730),,,  1 270 (   898 to   1 820),,
+CAF,random,Without risk factors,  1 180 (   686 to   1 610),,,  1 180 (   843 to   1 700),,
+CHN,assortative,With risk factors, 28 300 ( 12 800 to  53 400),5392,19.0404114353619, 58 300 ( 34 200 to 115 000),41372,70.9616648372586
+CHN,assortative,Without risk factors, 28 100 ( 12 700 to  53 000),,19.1778596886778, 57 900 ( 34 000 to 115 000),,71.5138028445295
+CHN,random,With risk factors, 28 300 ( 12 800 to  53 300),5392,19.0456606919708, 37 000 ( 21 900 to  71 600),41372,111.947870920468
+CHN,random,Without risk factors, 28 100 ( 12 700 to  52 900),,19.1831466467073, 36 700 ( 21 700 to  71 000),,112.818692036119
+COD,assortative,With risk factors, 15 300 (  8 160 to  22 600),,, 15 400 (  8 820 to  23 900),,
+COD,assortative,Without risk factors, 14 400 (  7 650 to  21 300),,, 14 500 (  8 300 to  22 500),,
+COD,random,With risk factors, 15 300 (  8 140 to  22 500),,, 14 300 (  8 250 to  22 300),,
+COD,random,Without risk factors, 14 400 (  7 630 to  21 300),,, 13 400 (  7 770 to  21 000),,
+COG,assortative,With risk factors,    911 (   747 to   1 240),,,    993 (   702 to   1 240),,
+COG,assortative,Without risk factors,    860 (   711 to   1 170),,,    920 (   664 to   1 140),,
+COG,random,With risk factors,    911 (   746 to   1 240),,,    879 (   626 to   1 090),,
+COG,random,Without risk factors,    860 (   710 to   1 170),,,    814 (   593 to     996),,
+ETH,assortative,With risk factors, 13 500 (  7 450 to  20 800),,, 22 400 ( 14 700 to  29 300),,
+ETH,assortative,Without risk factors, 12 700 (  6 980 to  19 700),,, 21 100 ( 13 900 to  27 500),,
+ETH,random,With risk factors, 13 500 (  7 440 to  20 800),,, 16 600 ( 11 000 to  21 500),,
+ETH,random,Without risk factors, 12 700 (  6 980 to  19 700),,, 15 600 ( 10 400 to  20 200),,
+GAB,assortative,With risk factors,    169 (    97.3 to     247),,,    224 (   137 to     364),,
+GAB,assortative,Without risk factors,    165 (    95.2 to     240),,,    217 (   132 to     355),,
+GAB,random,With risk factors,    169 (    97.6 to     247),,,    210 (   128 to     339),,
+GAB,random,Without risk factors,    165 (    95.5 to     240),,,    203 (   123 to     330),,
+IDN,assortative,With risk factors, 13 700 ( 10 000 to  25 800),,, 24 700 ( 13 000 to  36 800),,
+IDN,assortative,Without risk factors, 13 000 (  9 520 to  24 500),,, 23 300 ( 12 300 to  34 600),,
+IDN,random,With risk factors, 13 700 ( 10 100 to  25 800),,, 18 000 (  9 930 to  26 400),,
+IDN,random,Without risk factors, 13 000 (  9 550 to  24 500),,, 17 000 (  9 380 to  24 800),,
+IND,assortative,With risk factors,168 000 (112 000 to 276 000),68006,40.5231607586752,316 000 (161 000 to 615 000),209570,66.2510186691015
+IND,assortative,Without risk factors,127 000 ( 85 800 to 209 000),,53.3720519934381,240 000 (122 000 to 465 000),,87.3279215585126
+IND,random,With risk factors,168 000 (112 000 to 277 000),68006,40.5206668073463,233 000 (124 000 to 445 000),209570,89.8820672385111
+IND,random,Without risk factors,127 000 ( 85 700 to 210 000),,53.3687524077377,177 000 ( 94 400 to 336 000),,118.476185880559
+KEN,assortative,With risk factors,  6 580 (  4 050 to  12 800),2039,31.0045798544034, 10 700 (  5 670 to  19 300),5776,54.0375048856518
+KEN,assortative,Without risk factors,  6 180 (  3 820 to  12 100),,32.9862765954794,  9 940 (  5 240 to  18 000),,58.0858173871758
+KEN,random,With risk factors,  6 580 (  4 030 to  12 800),2039,31.0001509930755,  8 480 (  4 520 to  15 100),5776,68.1417258519039
+KEN,random,Without risk factors,  6 180 (  3 800 to  12 100),,32.9817404396713,  7 890 (  4 180 to  14 100),,73.2433139460676
+LBR,assortative,With risk factors,    585 (   364 to     815),,,    691 (   449 to     941),,
+LBR,assortative,Without risk factors,    564 (   351 to     786),,,    662 (   430 to     898),,
+LBR,random,With risk factors,    584 (   364 to     818),,,    592 (   393 to     799),,
+LBR,random,Without risk factors,    564 (   350 to     788),,,    567 (   376 to     763),,
+LSO,assortative,With risk factors,    416 (   277 to     981),93,22.3813334853003,    568 (   445 to     754),159,28.00591691151
+LSO,assortative,Without risk factors,    380 (   251 to     885),,24.4516948389841,    470 (   342 to     588),,33.798222232739
+LSO,random,With risk factors,    416 (   274 to     983),93,22.3730101211493,    491 (   390 to     647),159,32.4091179365346
+LSO,random,Without risk factors,    380 (   249 to     886),,24.4428091358679,    406 (   300 to     504),,39.1150748798122
+MMR,assortative,With risk factors,  3 430 (  2 230 to   5 090),3241,94.5969637058192,  4 840 (  2 830 to   8 690),4093,84.6002895563669
+MMR,assortative,Without risk factors,  3 140 (  2 050 to   4 670),,103.278252788925,  4 430 (  2 590 to   7 960),,92.4139879395779
+MMR,random,With risk factors,  3 420 (  2 230 to   5 080),3241,94.6446697533601,  3 800 (  2 200 to   6 600),4093,107.798444250938
+MMR,random,Without risk factors,  3 140 (  2 050 to   4 650),,103.33033410311,  3 480 (  2 010 to   6 040),,117.757230685106
+MNG,assortative,With risk factors,    140 (    75.3 to     196),,,    210 (   144 to     319),,
+MNG,assortative,Without risk factors,    140 (    75.3 to     196),,,    210 (   144 to     319),,
+MNG,random,With risk factors,    140 (    75.4 to     196),,,    165 (   114 to     250),,
+MNG,random,Without risk factors,    140 (    75.5 to     196),,,    165 (   114 to     250),,
+MOZ,assortative,With risk factors,  6 580 (  3 650 to  13 400),,,  6 590 (  4 250 to   8 240),,
+MOZ,assortative,Without risk factors,  6 010 (  3 220 to  12 200),,,  5 490 (  3 470 to   7 140),,
+MOZ,random,With risk factors,  6 580 (  3 650 to  13 300),,,  6 000 (  3 900 to   7 370),,
+MOZ,random,Without risk factors,  6 020 (  3 220 to  12 200),,,  5 000 (  3 190 to   6 380),,
+NAM,assortative,With risk factors,    470 (   240 to     636),166,35.3339192338678,    472 (   317 to     672),404,85.6739701308713
+NAM,assortative,Without risk factors,    430 (   218 to     598),,38.5699918249343,    432 (   287 to     617),,93.5990241934577
+NAM,random,With risk factors,    470 (   240 to     641),166,35.3560878569911,    420 (   284 to     592),404,96.2179361288416
+NAM,random,Without risk factors,    430 (   218 to     602),,38.5927399114656,    384 (   257 to     544),,105.120418030877
+NGA,assortative,With risk factors, 18 700 ( 11 800 to  25 700),,, 23 100 ( 12 900 to  29 200),,
+NGA,assortative,Without risk factors, 17 600 ( 11 100 to  24 200),,, 21 700 ( 12 100 to  27 500),,
+NGA,random,With risk factors, 18 700 ( 11 800 to  25 700),,, 21 500 ( 12 000 to  26 900),,
+NGA,random,Without risk factors, 17 600 ( 11 100 to  24 200),,, 20 200 ( 11 200 to  25 200),,
+PAK,assortative,With risk factors, 30 000 ( 19 800 to  46 400),,, 38 300 ( 25 000 to  50 400),,
+PAK,assortative,Without risk factors, 25 600 ( 16 900 to  39 500),,, 32 600 ( 21 300 to  42 800),,
+PAK,random,With risk factors, 30 000 ( 19 800 to  46 500),,, 33 200 ( 21 700 to  43 600),,
+PAK,random,Without risk factors, 25 600 ( 16 900 to  39 500),,, 28 200 ( 18 500 to  37 000),,
+PHL,assortative,With risk factors, 12 000 (  8 630 to  19 600),8372,69.7767556249771, 18 300 ( 11 100 to  30 500),21460,117.364004589274
+PHL,assortative,Without risk factors, 11 400 (  8 190 to  18 600),,73.6164781749022, 17 000 ( 10 200 to  28 600),,126.290342070504
+PHL,random,With risk factors, 12 000 (  8 640 to  19 700),8372,69.8060067562871, 14 300 (  9 240 to  23 400),21460,150.114050851527
+PHL,random,Without risk factors, 11 400 (  8 190 to  18 600),,73.6473508828518, 13 300 (  8 500 to  21 900),,161.544137523253
+PNG,assortative,With risk factors,    545 (   343 to     802),,,    811 (   569 to   1 180),,
+PNG,assortative,Without risk factors,    543 (   342 to     799),,,    803 (   562 to   1 160),,
+PNG,random,With risk factors,    545 (   343 to     802),,,    614 (   432 to     871),,
+PNG,random,Without risk factors,    543 (   342 to     799),,,    608 (   427 to     868),,
+PRK,assortative,With risk factors,  1 110 (   616 to   1 760),,,  1 780 (  1 020 to   2 610),,
+PRK,assortative,Without risk factors,  1 090 (   608 to   1 730),,,  1 750 (  1 010 to   2 580),,
+PRK,random,With risk factors,  1 110 (   617 to   1 750),,,  1 220 (   723 to   1 750),,
+PRK,random,Without risk factors,  1 090 (   609 to   1 730),,,  1 200 (   713 to   1 730),,
+SLE,assortative,With risk factors,  1 110 (   593 to   2 140),,,  1 160 (   795 to   1 750),,
+SLE,assortative,Without risk factors,  1 070 (   572 to   2 050),,,  1 100 (   748 to   1 670),,
+SLE,random,With risk factors,  1 110 (   593 to   2 150),,,  1 050 (   713 to   1 570),,
+SLE,random,Without risk factors,  1 070 (   571 to   2 060),,,    994 (   671 to   1 500),,
+THA,assortative,With risk factors,  1 780 (  1 230 to   2 560),343,19.233659034888,  3 590 (  2 010 to   5 610),1764,49.0812559602522
+THA,assortative,Without risk factors,  1 720 (  1 190 to   2 470),,19.9261334579478,  3 440 (  1 910 to   5 330),,51.3404136898478
+THA,random,With risk factors,  1 780 (  1 230 to   2 560),343,19.2296283984366,  2 450 (  1 430 to   3 760),1764,71.9608624531562
+THA,random,Without risk factors,  1 720 (  1 190 to   2 470),,19.9219649665491,  2 340 (  1 360 to   3 580),,75.2744465219745
+TZA,assortative,With risk factors,  8 260 (  5 230 to  13 300),,,  7 910 (  5 740 to  11 600),,
+TZA,assortative,Without risk factors,  7 910 (  5 010 to  12 600),,,  7 450 (  5 440 to  10 800),,
+TZA,random,With risk factors,  8 260 (  5 230 to  13 200),,,  7 140 (  5 330 to  10 400),,
+TZA,random,Without risk factors,  7 910 (  5 000 to  12 600),,,  6 730 (  5 050 to   9 620),,
+UGA,assortative,With risk factors,  4 380 (  2 430 to   6 030),,,  3 980 (  2 530 to   6 150),,
+UGA,assortative,Without risk factors,  4 190 (  2 330 to   5 760),,,  3 760 (  2 390 to   5 770),,
+UGA,random,With risk factors,  4 380 (  2 430 to   6 020),,,  3 590 (  2 320 to   5 510),,
+UGA,random,Without risk factors,  4 190 (  2 330 to   5 750),,,  3 390 (  2 190 to   5 170),,
+VNM,assortative,With risk factors,  3 640 (  2 480 to   5 550),,,  4 850 (  3 410 to   6 510),,
+VNM,assortative,Without risk factors,  3 300 (  2 250 to   5 030),,,  4 390 (  3 090 to   5 890),,
+VNM,random,With risk factors,  3 640 (  2 480 to   5 550),,,  3 840 (  2 810 to   5 070),,
+VNM,random,Without risk factors,  3 300 (  2 250 to   5 040),,,  3 480 (  2 550 to   4 590),,
+ZAF,assortative,With risk factors, 10 800 (  5 090 to  17 700),,, 12 200 (  8 290 to  17 500),,
+ZAF,assortative,Without risk factors, 10 100 (  4 650 to  16 500),,, 10 900 (  7 040 to  16 200),,
+ZAF,random,With risk factors, 10 800 (  5 050 to  17 700),,, 10 400 (  6 950 to  14 700),,
+ZAF,random,Without risk factors, 10 100 (  4 620 to  16 500),,,  9 240 (  5 890 to  13 600),,
+ZMB,assortative,With risk factors,  3 090 (  1 700 to   5 060),,,  3 010 (  1 890 to   4 680),,
+ZMB,assortative,Without risk factors,  2 920 (  1 560 to   4 740),,,  2 750 (  1 700 to   4 230),,
+ZMB,random,With risk factors,  3 090 (  1 700 to   5 060),,,  2 630 (  1 660 to   4 050),,
+ZMB,random,Without risk factors,  2 920 (  1 570 to   4 740),,,  2 390 (  1 500 to   3 660),,
+TOTAL,assortative,With risk factors,372 000 (284 000 to 459 000),,,611 000 (379 000 to 844 000),,
+TOTAL,assortative,Without risk factors,318 000 (249 000 to 386 000),,,514 000 (336 000 to 691 000),,
+TOTAL,random,With risk factors,372 000 (284 000 to 460 000),,,466 000 (302 000 to 630 000),,
+TOTAL,random,Without risk factors,318 000 (249 000 to 386 000),,,392 000 (267 000 to 517 000),,

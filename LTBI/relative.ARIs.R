@@ -9,8 +9,8 @@ load(file=here('rawdata/whokey.Rdata'))
 
 ## --- mixing data
 ## contact data
-load(here('rawdata/synthetic_contacts_2020.csv.Rdata'))
-CD <- synthetic_contacts_2020[location_contact=="all",
+load(here('rawdata/synthetic_contacts_2021.csv.Rdata'))
+CD <- synthetic_contacts_2021[location_contact=="all",
                               .(iso3=iso3c,age_contactor,
                                 age_contactee=age_cotactee,
                                 ctx=mean_number_of_contacts)]
