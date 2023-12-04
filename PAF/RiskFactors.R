@@ -94,7 +94,101 @@ TH
 
 fwrite(TH,file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
 
+## ===== BMI ===
+load(here('rawdata/BMIREF.Rdata'))
+load(here('rawdata/DRA.Rdata'))
 
+## https://academic.oup.com/ije/article/39/1/149/713956?login=false
+## 13.8% per unit BMI 13.8% (95% CI 13.4−14.2)
+## MGF = E[exp(tX)] = 1/(1-theta*t)^k
+alph <- log(1-0.138) #per BMI
+alph.lo <- log(1-0.142) #per BMI
+alph.hi <- log(1-0.134) #per BMI
+
+## un-normalized RR
+unRR <- function(a,k,th) 1/(1-th*a)^k
+
+getRR <- function(A,k,theta,kref,thetaref) unRR(A,k,theta) / unRR(A,kref,thetaref)
+
+## test:
+top <- DRA[Country=='India' & Sex=='Girls' & age==19,.(k,theta)]
+ref <- BMIREF[Sex=='Girls' & age==19,.(k=kref,theta=thetaref)]
+top[,k*theta]
+ref[,k*theta]
+getRR(alph,top$k,top$theta,ref$k,ref$theta) #test
+
+## TODO new plot of ref and IND
+
+## calculate IRRs
+DRA <- merge(DRA,BMIREF,by=c('Sex','age'))
+DRA[,c('RR','RR.lo','RR.hi'):=1.0]
+DRA[,c('RR','RR.lo','RR.hi'):=.(
+       getRR(alph,k,theta,kref,thetaref),
+       getRR(alph.hi,k,theta,kref,thetaref),
+       getRR(alph.lo,k,theta,kref,thetaref)
+     )]
+
+DRAM <- DRA[age>10,.(RRn=mean(RR)),by=Country]
+TH <- fread(file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
+DRAM <- merge(DRAM,TH[,.(Country,RRo=RR)],by='Country')
+
+ggplot(DRAM,aes(RRo,RRn,label=Country))+
+  geom_point() + ggrepel::geom_text_repel()+
+  geom_abline(intercept = 0,slope=1,col=2)+
+  geom_smooth(method='lm',forumla = y~x-1)+
+  xlab('Previous RR') + ylab('New RR (average over ages/sex)')+
+  ggtitle('Comparison of undernutrition BMIs')
+
+ggsave('plots/BMIcf.png',w=6,h=6)
+
+lm(data=DRAM,RRn~RRo-1)
+
+CFA <- merge(DRA[age>=10,.(RRn=mean(RR)),by=Country],
+             DRA[age>=10 & age <15,.(RRy=mean(RR)),by=Country],by='Country')
+
+CFA <- merge(CFA,DRA[age>=15,.(RRo=mean(RR)),by=Country],by='Country')
+
+CFA <- DRA[age>=10,.(RR=mean(RR)),by=.(Sex,Country)]
+CFA <- dcast(CFA,Country ~ Sex,value.var = 'RR')
+
+ggplot(CFA,aes(Boys,Girls,label=Country))+ geom_point()+ggrepel::geom_text_repel()+geom_abline(intercept=0,slope=1,col=2)
+ggsave('CFsex.png',w=7,h=7)
+
+DRA[,bmi:=k*theta]
+CFA <- dcast(DRA[age==15],Country ~ Sex,value.var = 'bmi' )
+
+
+## average by LTBI?
+## load LTBI:
+library(glue)
+load(file=gh('LTBI/data/rnra.Rdata'))
+## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
+## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
+tmp <- rnra[mixing=='assortative'][,.(iso3,age,P)]
+
+
+ckey
+
+rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
+rnra <- rnra[order(mixing,replicate,iso3,age)]
+## ensure paired over mixing:
+rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
+rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
+rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
+rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
+## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
+## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
+
+tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
+rnra[,prog.slow:=tmp]
+## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
+
+## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
+rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
+
+
+
+## fwrite(TH,file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
 
 ## ====== HIV ===
 
@@ -143,8 +237,8 @@ IRR
 
 ## add in IRRs for thinness
 ckey[,newcountry:=UN]
-setdiff(ckey$UN,TH$Country)
-setdiff(TH$Country,ckey$UN)
+setdiff(ckey$UN,DRA$Country)
+setdiff(DRA$Country,ckey$UN)
 ckey[UN=="Democratic People's Republic of Korea",newcountry:="DPR Korea"]
 ckey[UN=="Democratic Republic of the Congo",newcountry:="DR Congo"]
 ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
