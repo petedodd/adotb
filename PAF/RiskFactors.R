@@ -1,4 +1,5 @@
 library(here)
+library(glue)
 library(data.table)
 library(ggplot2)
 library(readxl)
@@ -12,89 +13,10 @@ fmt <- function(x,y,z) paste0(rds(x)," (",rds(y)," to ",rds(z),")")
 fmtpc <- function(x,y,z) paste0(rds(1e2*x)," (",rds(1e2*y)," to ",rds(1e2*z),")")
 gh <- function(x) glue(here(x))
 
-## ----------------- BMI/thinness -------
-## BMI distribution
-## 18.5 lower quintile
-## 95th obese = 30
-
-## fit gamma distribution to these assumptions:
-F <- function(x) (qgamma(0.2,shape=x[1],scale=x[2])-18.5)^2 +
-                   (qgamma(0.95,shape=x[1],scale=x[2])-30)^2 #error
-(ans <- optim(par=c(2,20),fn=F,method='L-BFGS-B',lower=0.1,upper=100)) #ans:  25.4526201  0.8751584
-curve(dgamma(x,shape=ans$par[1],scale=ans$par[2]),from=1,to=50) #check
-
-## now what distribution gives a particular level of thinness?
-(m <- ans$par[1]*ans$par[2])
-(s <- ans$par[1]*ans$par[2]^2)
-xr <- pnorm(-2) #ref point for -2z
-bmi2z <- qgamma(xr,shape=ans$par[1],scale=ans$par[2])
-pgamma(bmi2z,shape=ans$par[1],scale=ans$par[2]) #prob below in std dist
-(pc <- pgamma(bmi2z,shape=ans$par[1],scale=ans$par[2]/1.3)) #EG prob below in std dist
-
-## function to scale this so as to achive thinness proportion
-getscale <- function(propthin) uniroot(
-                                 function(x){
-                                   propthin-pgamma(bmi2z,shape=ans$par[1],scale=ans$par[2]/x)
-                                 },
-                                 interval = c(0.5,10))$root
-getscale(0.2) #test
-
-png(here('plots/BMIeg.png'))
-curve(dgamma(x,shape=ans$par[1],scale=ans$par[2]/getscale(0.1)),
-      from=1,to=50,col=2,
-      xlab='BMI',ylab='density') #check
-curve(dgamma(x,shape=ans$par[1],scale=ans$par[2]),
-      from=1,to=50,add=TRUE) #check
-grid()
-dev.off()
-
-
-## https://academic.oup.com/ije/article/39/1/149/713956?login=false
-## 13.8% per unit BMI 13.8% (95% CI 13.4−14.2)
-## MGF = E[exp(tX)] = 1/(1-theta*t)^k
-alph <- log(1-0.138) #per BMI
-alph.lo <- log(1-0.142) #per BMI
-alph.hi <- log(1-0.134) #per BMI
-
-## un-normalized RR
-unRR <- function(a,k,th) 1/(1-th*a)^k
-unRR(alph,ans$par[1],ans$par[2]/1.2) / unRR(alph,ans$par[1],ans$par[2]) #test
-
-getRR <- function(scale,A) unRR(A,ans$par[1],ans$par[2]/scale) / unRR(A,ans$par[1],ans$par[2])
-getRR(1.2,alph) #test
-
-## NOTE getRR is monotonic decreasing in a (for scale>1):
-## (1-B*a)^k/(1-C*a)^k
-curve(((1-ans$par[2]*x)/(1-ans$par[2]*x/1.01))^ans$par[1],from=-0.1,to=-0.2)
-## and increasing if scale<1
-
-TH <- read_excel(here('rawdata/Adolescent Thiness Data.xlsx'))
-TH <- as.data.table(TH)
-TH <- TH[2:nrow(TH)]
-names(TH)[2] <- 'pcthin'
-names(TH)[3] <- 'go'
-TH[,go:=NULL]
-
-## calculate the RRs from thinness
-TH[,c('RR','RR.lo','RR.hi'):=1.0]
-for(i in 1:nrow(TH)){
-  scl <- getscale(TH$pcthin[i]/1e2)
-  TH$RR[i] <- getRR(scl,alph)
-  if(scl>1){
-    TH$RR.hi[i] <- getRR(scl,alph.lo)
-    TH$RR.lo[i] <- getRR(scl,alph.hi)
-  } else {
-    TH$RR.hi[i] <- getRR(scl,alph.hi)
-    TH$RR.lo[i] <- getRR(scl,alph.lo)
-  }
-}
-TH[,RR.sd:=(RR.hi-RR.lo)/3.92]
-
-TH
-
-fwrite(TH,file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
+load(here('rawdata/ckey.Rdata'))
 
 ## ===== BMI ===
+## TODO document these
 load(here('rawdata/BMIREF.Rdata'))
 load(here('rawdata/DRA.Rdata'))
 
@@ -107,7 +29,6 @@ alph.hi <- log(1-0.134) #per BMI
 
 ## un-normalized RR
 unRR <- function(a,k,th) 1/(1-th*a)^k
-
 getRR <- function(A,k,theta,kref,thetaref) unRR(A,k,theta) / unRR(A,kref,thetaref)
 
 ## test:
@@ -117,7 +38,18 @@ top[,k*theta]
 ref[,k*theta]
 getRR(alph,top$k,top$theta,ref$k,ref$theta) #test
 
-## TODO new plot of ref and IND
+## plot of ref and IND for 19 yo F
+png(here('plots/BMIeg.png'))
+curve(dgamma(x,shape=ref$k,scale=ref$theta),
+      from=1,to=50,col=1,n=1e3,
+      xlab='BMI',ylab='density') #check
+curve(dgamma(x,shape=top$k,scale=top$theta),
+      from=1,to=50,col=2,n=1e3,add=TRUE) #check
+text(x=15,y=0.12,,col=2,
+     labels = paste0(round(getRR(alph,top$k,top$theta,ref$k,ref$theta),1),'x'))
+grid()
+dev.off()
+
 
 ## calculate IRRs
 DRA <- merge(DRA,BMIREF,by=c('Sex','age'))
@@ -127,6 +59,7 @@ DRA[,c('RR','RR.lo','RR.hi'):=.(
        getRR(alph.hi,k,theta,kref,thetaref),
        getRR(alph.lo,k,theta,kref,thetaref)
      )]
+save(DRA,file=here('PAF/data/DRAgamma.Rdata'))
 
 DRAM <- DRA[age>10,.(RRn=mean(RR)),by=Country]
 TH <- fread(file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
@@ -136,12 +69,12 @@ ggplot(DRAM,aes(RRo,RRn,label=Country))+
   geom_point() + ggrepel::geom_text_repel()+
   geom_abline(intercept = 0,slope=1,col=2)+
   geom_smooth(method='lm',forumla = y~x-1)+
-  xlab('Previous RR') + ylab('New RR (average over ages/sex)')+
+  xlab('Previous RR using UN summaries') + ylab('NCD-RiSC-based RR (average over ages/sex)')+
   ggtitle('Comparison of undernutrition BMIs')
 
 ggsave('plots/BMIcf.png',w=6,h=6)
 
-lm(data=DRAM,RRn~RRo-1)
+## lm(data=DRAM,RRn~RRo-1)
 
 CFA <- merge(DRA[age>=10,.(RRn=mean(RR)),by=Country],
              DRA[age>=10 & age <15,.(RRy=mean(RR)),by=Country],by='Country')
@@ -152,50 +85,77 @@ CFA <- DRA[age>=10,.(RR=mean(RR)),by=.(Sex,Country)]
 CFA <- dcast(CFA,Country ~ Sex,value.var = 'RR')
 
 ggplot(CFA,aes(Boys,Girls,label=Country))+ geom_point()+ggrepel::geom_text_repel()+geom_abline(intercept=0,slope=1,col=2)
-ggsave('CFsex.png',w=7,h=7)
+ggsave(here('plots/CFsex.png'),w=7,h=7)
 
 DRA[,bmi:=k*theta]
 CFA <- dcast(DRA[age==15],Country ~ Sex,value.var = 'bmi' )
 
+## TODO -- will remove below here
 
-## average by LTBI?
-## load LTBI:
-library(glue)
-load(file=gh('LTBI/data/rnra.Rdata'))
-## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
-## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
-tmp <- rnra[mixing=='assortative'][,.(iso3,age,P)]
+## ## average by LTBI?
+## ## load LTBI:
+
+## load(file=gh('LTBI/data/rnra.Rdata'))
+## ## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
+## ## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
+## tmp <- rnra[mixing=='assortative'][,.(iso3,age,P)]
 
 
-ckey
+## ckey
 
-rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
-rnra <- rnra[order(mixing,replicate,iso3,age)]
-## ensure paired over mixing:
-rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
-rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
-rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
-rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
-## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
-## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
+## rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
+## rnra <- rnra[order(mixing,replicate,iso3,age)]
+## ## ensure paired over mixing:
+## rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
+## rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
+## rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
+## rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
+## ## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
+## ## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
 
-tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
-rnra[,prog.slow:=tmp]
-## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
+## tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
+## rnra[,prog.slow:=tmp]
+## ## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
 
-## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
-rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
+## ## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
+## rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
 
 
 
 ## fwrite(TH,file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
 
 ## ====== HIV ===
+## ART
+ART <- fread(here('rawdata/Adolescent ART Coverage for TB Modeling Study 2.csv'))
+ART[Value=='<100',Value:='50']
+ART[Value=='<200',Value:='100']
+ART[Value=='<500',Value:='250']
+ART[,Value:=as.numeric(gsub(',','',Value))]
+ART[,sex:=substr(Sex,start=1,stop=1)]
+ART[,acat:=gsub('Age ','',Age)]
+ART <- merge(ART,ckey[,.(iso3,UN)],by.x='Country.Region',by.y='UN')
+## HIV
+H <- fread(here('rawdata/IHME-GBD_2019_DATA-5a125199-1.csv'))
+H <- merge(H,ckey,by.x='location_name',by.y='ihme',all.x=FALSE,all.y=TRUE)
+H[,acat:=gsub(' years','',age_name)]
+H[,sex:=substr(sex_name,start=1,stop=1)]
+## popn
+load(here('rawdata/N80MF.Rdata'))
+N80 <- N80[iso3 %in% ckey$iso3 & AgeGrp %in% c('10-14','15-19')]
+N80[,Year:=NULL]
+N80 <- melt(N80,id=c('iso3','AgeGrp'))
+N80[,sex:=gsub('T','B',substr(variable,start=4,stop=4))]
 
-## HIV data
-load(here('rawdata/H.Rdata')) #NOTE no uncertainty
-load(here('rawdata/ckey.Rdata'))
-H <- H[iso3 %in% ckey$iso3] #restrict to relevant countries
+## merge
+H <- merge(H,N80,by.x=c('iso3','acat','sex'),by.y=c('iso3','AgeGrp','sex'),all.x=TRUE,all.y=FALSE)
+H <- merge(H,ART,by=c('iso3','acat','sex'))
+H[,art:=Value/(val*value*1e3)]
+H[art>1,art:=1.0]
+H <- H[,.(iso3,sex,acat,hiv=val,hiv.lo=lower,hiv.hi=upper,pop=1e3*value,art)]
+
+## ## HIV data
+## load(here('rawdata/H.Rdata')) #NOTE no uncertainty TODO delete
+## H <- H[iso3 %in% ckey$iso3] #restrict to relevant countries
 
 ## IRR estimates
 PD <- read.csv(here('rawdata/HIVirrs.csv'))
@@ -204,47 +164,52 @@ PD[,c('NAME','DESCRIPTION')]
 P <- parse.parmtable(PD)
 names(P)
 
-## reshape
-H[,country:=NULL]
-H <- melt(H,id='iso3')
-H[,c('qty','acat'):=tstrsplit(variable,"\\.")]
-H <- dcast(H,iso3+acat~qty,value.var = 'value')
+## ## reshape
+## H[,country:=NULL]
+## H <- melt(H,id='iso3')
+## H[,c('qty','acat'):=tstrsplit(variable,"\\.")]
+## H <- dcast(H,iso3+acat~qty,value.var = 'value')
 
 ## --- PSAify
 
 ## extend H
 nrep <- 1e3 #replicates
 nn <- nrow(H)
+H <- H[sex!='B']
 H <- H[rep(1:nn,each = nrep)]
 H[,replicate:=rep(1:nrep,nn)]
+H[,hiv.sd:=(hiv.hi-hiv.lo)/3.92]
+H[,hiv:=rgamma(nrow(H), #gamma distribution
+               shape=(hiv/(hiv.sd+1e-6))^2,
+               scale = hiv.sd^2/(hiv+1e-6))]
 
 ## make IRRs
 IRR <- makePSA(nrep,P)
 IRR[,replicate:=1:nrep]
-IRR2 <- copy(IRR)
-IRR[,acat:='10-14']
-IRR2[,acat:='15-19']
-IRR <- rbind(IRR,IRR2)
-IRR <- merge(IRR,H,by=c('replicate','acat'))
-IRR[,c('a','h'):=.(artpc/1e2,hivpc/1e2)]
-IRR[,c('artpc','hivpc'):=NULL]
-IRR[,irr:=hivpi*(artp*a+1-a)]
-IRR[,irr2:=hivp*(artp*a+1-a)]
-IRR[,HIVinTB:=h*irr / (h*irr+1-h)]
-IRR[,HIVinTB2:=h*irr2 / (h*irr2+1-h)]
-IRM <- IRR[,.(HIVinTB=mean(HIVinTB),HIVinTB2=mean(HIVinTB2),hiv=mean(h)),by=.(iso3,acat)] #mean
-IRR
+sexage <- data.table(sex=rep(c('M','F'),2),acat=rep(c('10-14','15-19'),each=2))
+IRR <- IRR[rep(1:nrep,each=nrow(sexage))]
+sexage <- sexage[rep(1:4,nrep)]
+IRR[,c('sex','acat'):=sexage]
+IRR <- merge(IRR,H,by=c('replicate','acat','sex'))
+IRR[,irr:=hivpi*(artp*art+1-art)]
+IRR[,irr2:=hivp*(artp*art+1-art)]
+IRR[,HIVinTB:=hiv*irr / (hiv*irr+1-hiv)]
+IRR[,HIVinTB2:=hiv*irr2 / (hiv*irr2+1-hiv)]
 
-## add in IRRs for thinness
-ckey[,newcountry:=UN]
-setdiff(ckey$UN,DRA$Country)
-setdiff(DRA$Country,ckey$UN)
-ckey[UN=="Democratic People's Republic of Korea",newcountry:="DPR Korea"]
-ckey[UN=="Democratic Republic of the Congo",newcountry:="DR Congo"]
-ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
-ckey[UN=="Papua New Guinea",newcountry:="PNG"]
+IRM <- IRR[,.(HIVinTB=mean(HIVinTB),HIVinTB2=mean(HIVinTB2),hiv=mean(hiv)),by=.(iso3,acat)] #mean
 
-save(ckey,file=here('progression/data/ckey.Rdata'))
+
+## change below to use means over TODO
+DRA[,c('RR','RR.lo','RR.hi'):=.(
+       getRR(alph,k,theta,kref,thetaref),
+       getRR(alph.hi,k,theta,kref,thetaref),
+       getRR(alph.lo,k,theta,kref,thetaref)
+     )]
+save(DRA,file=here('PAF/data/DRA.Rdata'))
+
+DRAM <- DRA[age>10,.(RRn=mean(RR)),by=Country]
+TH <- fread(file=here('outdata/thinness.RRs.csv')) #NOTE no uncertainty given for pcthin
+DRAM <- merge(DRAM,TH[,.(Country,RRo=RR)],by='Country')
 
 
 tmp <- merge(TH,ckey,by.x = 'Country',by.y = 'newcountry')
@@ -263,6 +228,7 @@ IRR <- merge(IRR,tmp[,.(replicate,iso3,acat,thin,IRRthin)],
 
 
 save(IRR,file=here('PAF/data/IRR.Rdata'))
+load(file=here('PAF/data/IRR.Rdata'))
 
 
 ## [(1-h+h*irr) - (1)] / (1-h+h*irr) = 1 - 1/(1-h+h*irr)
