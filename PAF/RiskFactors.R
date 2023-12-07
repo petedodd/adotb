@@ -194,7 +194,6 @@ UW[,acat:=ifelse(`Age group`>14,'15-19','10-14')]
 UW <- UW[,.(iso3,sex,acat,
             p1SD,p1SD.sd=(h1SD-l1SD)/3.92,
             p2SD,p2SD.sd=(h2SD-l2SD)/3.92)]
-
 UWS <- UW[,.(p1SD=mean(p1SD),p1SD.sd=ssum(p1SD.sd)/sqrt(10),
              p2SD=mean(p2SD),p2SD.sd=ssum(p2SD.sd)/sqrt(10)),
           by=.(iso3,acat)]
@@ -266,7 +265,8 @@ IRRS <- merge(IRRS,
 
 ## below for table 1 TODO check unc
 ## TODO also include unceretainty in thinness estimates
-IRRS[,thinness:=paste0(rds(th.mid*1e2))]
+## IRRS[,thinness:=paste0(rds(th.mid*1e2))]
+IRRS[,thinness:=fmtpc(th.mid,th.lo,th.hi)]
 IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
 IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
 IRRS[,BMI.PAF:=fmtpc(BMI.mid,BMI.lo,BMI.hi)]
