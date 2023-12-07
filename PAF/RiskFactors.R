@@ -299,3 +299,30 @@ GP <- ggplot(DRAML,aes(age,RR,ymin=RR-RR.sd*1.96,ymax=RR+RR.sd*1.96,col=sex,grou
   xlab('Age in years')+ylab('Risk ratio for TB due to BMI distribution')
 
 ggsave(GP,file=here('plots/bmiRRbyage.png'),h=10,w=10)
+
+
+## MF plot
+MF <- IRR[,.(replicate,iso3,sex,acat,RRB = RRbmi * (1-hiv+hiv*irr) )]
+MF <- dcast(MF,replicate+iso3+acat ~ sex,value.var = 'RRB')
+MF[,mfratio:=M/F]
+MF <- MF[,.(mf=mean(mfratio),mf.lo=lo(mfratio),mf.hi=hi(mfratio)),by=.(iso3,acat)]
+
+save(MF,file=here('PAF/data/MF.Rdata'))
+
+load(file=here('PAF/data/MF.Rdata'))
+
+tmp <- MF[acat=='10-14']
+der <- order(tmp$mf)
+lvls <- unique(tmp[der,iso3])
+MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
+MF[,age:=acat]
+
+pd <- position_dodge(0.1)
+GPP <- ggplot(MF[der],aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
+  geom_pointrange(position=pd)+
+  coord_flip()+
+  theme_classic()+theme(legend.position='top')+ggpubr::grids()+
+  xlab('Country')+ylab('M:F ratio of risk ratios due to HIV & BMI')+
+  geom_hline(yintercept = 1,col='grey',lty=2)
+
+ggsave(GPP,file=here('plots/MFcountry.png'),h=10,w=7)
