@@ -44,6 +44,8 @@ tmp[,qplot(pcnt)] + xlab('Percentage difference') + ggtitle('Comparison of mean 
 names(DR)
 DR[,length(unique(Country))]
 
+
+
 ## fit BMI distributiosn to this data (gamma distribution)
 nnmz <- c('m.BMI','h2.BMI','h1.BMI','l1.BMI','l2.BMI')
 anmz <- c(c('Country','Year','Sex','Age group'),nnmz)
@@ -107,6 +109,21 @@ grep('Papua',unique(D$Country),value=TRUE)
 D[grepl('North Korea',Country),Country:="DPR Korea"]
 D[grepl('Tanzania',Country),Country:="UR Tanzania"]
 D[grepl('Papua',Country),Country:="PNG"]
+
+
+
+## save measures of undernutrition
+UW <- D[Country %in% DO$Country & Year==2016,
+        .(Country,Sex,Year,`Age group`,
+          `Prevalence of BMI<minus1SD (underweight)`,
+          `Prevalence of BMI<minus1SD lower 95% uncertainty interval`,
+          `Prevalence of BMI<minus1SD upper 95% uncertainty interval`,
+          `Prevalence of BMI<minus2SD (moderate & severe underweight)`,
+          `Prevalence of BMI<minus2SD lower 95% uncertainty interval`,
+          `Prevalence of BMI<minus2SD upper 95% uncertainty interval`
+          )]
+
+save(UW,file=here('rawdata/UW.Rdata'))
 
 ## merge
 DR <- D[Country %in% DO$Country & Year == 2016]

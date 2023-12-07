@@ -181,7 +181,33 @@ DRAM <- DRAM[rep(1:nn,nrep)]
 DRAM[,replicate:=rep(1:nrep,each = nn)]
 DRAM[,RR:=rnorm(n=nrow(DRAM),mean=RR,sd=RR.sd)]
 
-## TODO generate/capture thinness measure
+## generate/capture thinness measure
+load(file=here('rawdata/UW.Rdata'))
+UW <- merge(UW,ckey[,.(iso3,newcountry)],by.y='newcountry',by.x = 'Country')
+names(UW) <- c('Country','Sex','Year','Age group',
+               'p1SD','l1SD','h1SD','p2SD','l2SD','h2SD','iso3')
+UW <- UW[`Age group`>9]
+UW[,sex:=ifelse(Sex=='Boys','M','F')]
+UW[,acat:=ifelse(`Age group`>14,'15-19','10-14')]
+UW <- UW[,.(iso3,sex,acat,
+            p1SD,p1SD.sd=(h1SD-l1SD)/3.92,
+            p2SD,p2SD.sd=(h2SD-l2SD)/3.92)]
+
+UWS <- UW[,.(p1SD=mean(p1SD),p1SD.sd=ssum(p1SD.sd)/sqrt(10),
+             p2SD=mean(p2SD),p2SD.sd=ssum(p2SD.sd)/sqrt(10)),
+          by=.(iso3,acat)]
+
+## how similar?
+GP2 <- ggplot(UWS,aes(p1SD,p2SD,label=iso3))+
+  geom_point()+geom_text_repel(show.legend = FALSE)+
+  facet_wrap(~acat)+
+  scale_x_continuous(label=percent)+scale_y_continuous(label=percent)+
+  theme_linedraw()+## theme(legend.position='top')+
+  xlab('BMI < 1SD')+ylab('BMI < 2SD')
+
+ggsave(GP2,file=here('plots/UWcf.png'),h=5,w=10)
+
+
 
 ## combine
 IRR <- merge(IRR,DRAM[,.(replicate,iso3,sex,acat,RRbmi=RR,thin=RR)],
@@ -227,28 +253,30 @@ ggsave(GP,file=here('plots/PAFsexCF.png'),h=5,w=10)
 
 IRRS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
                 a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
-                th.mid=mean(thin),th.lo=lo(thin),th.hi=hi(thin),
                 hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
                 BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi)),
              by=.(iso3,acat)]
+IRRS <- merge(IRRS,
+              UWS[,.(iso3,acat,th.mid=p2SD,th.lo=pmax(p2SD-1.96*p2SD.sd,0),th.hi=p2SD+1.96*p2SD.sd)],
+              by=c('iso3','acat')) #merge underweight data
 
-## TODO below for table 1
+## below for table 1 TODO check unc
 IRRS[,thinness:=paste0(rds(th.mid*1e2))]
 IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
 IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
-IRRS[,thinness.PAF:=fmtpc(thinness.mid,thinness.lo,thinness.hi)]
+IRRS[,BMI.PAF:=fmtpc(BMI.mid,BMI.lo,BMI.hi)]
 IRRS[,hiv.PAF:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
-IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,art,thinness.PAF,hiv.PAF)]
-IRRS <- dcast(IRRS,iso3 ~ acat, value.var = c('thinness','thinness.PAF','hiv','art','hiv.PAF'))
+IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,art,BMI.PAF,hiv.PAF)]
+IRRS <- dcast(IRRS,iso3 ~ acat, value.var = c('thinness','BMI.PAF','hiv','art','hiv.PAF'))
 IRRS <- merge(IRRS,ckey[,.(iso3,country=newcountry)],by='iso3')
 setcolorder(IRRS,neworder = c("iso3","country",
                               "thinness_10-14",
-                              "thinness.PAF_10-14",
+                              "BMI.PAF_10-14",
                               "hiv_10-14",
                               "art_10-14",
                               "hiv.PAF_10-14",
                               "thinness_15-19",
-                              "thinness.PAF_15-19",
+                              "BMI.PAF_15-19",
                               "hiv_15-19",
                               "art_15-19",
                               "hiv.PAF_15-19"))
