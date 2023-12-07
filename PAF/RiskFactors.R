@@ -101,6 +101,7 @@ ART <- fread(here('rawdata/Adolescent ART Coverage for TB Modeling Study 2.csv')
 H <- fread(here('rawdata/IHME-GBD_2019_DATA-5a125199-1.csv')) #HIV data
 load(here('rawdata/N80MF.Rdata'))                             #demographic data
 
+
 ## ====== HIV ===
 ## ART
 ART[Value=='<100',Value:='50']
@@ -166,6 +167,7 @@ DRAM <- DRA[age>9,.(Country,Sex,age,RR,RR.sd)]
 DRAM[,acat:=ifelse(age<=14,'10-14','15-19')]
 DRAM[,sex:=ifelse(Sex=='Boys','M','F')]
 setdiff(DRAM$Country,ckey$newcountry) #these get dropped
+DRAML <- DRAM[Country %in% ckey$newcountry] #for plotting
 DRAM <- merge(DRAM,ckey[,.(iso3,newcountry)],by.x = 'Country',by.y='newcountry',all.y=TRUE,all.x = FALSE)
 DRAM <- DRAM[,.(RR=mean(RR),RR.sd=ssum(RR.sd)/sqrt(5)),by=.(iso3,sex,acat)]
 
@@ -215,6 +217,7 @@ IRR <- merge(IRR,DRAM[,.(replicate,iso3,sex,acat,RRbmi=RR,thin=RR)],
 
 
 save(IRR,file=here('PAF/data/IRR.Rdata'))
+
 load(file=here('PAF/data/IRR.Rdata'))
 
 
@@ -238,16 +241,17 @@ tmp[,sex:=NA]
 GP <- ggplot(IRRSS,aes(hiv.mid,BMI.mid,col=sex,shape=sex,label=iso3))+
   scale_x_continuous(label=percent)+scale_y_continuous(label=percent)+
   geom_point()+
-  geom_segment(data=tmp,aes(x=hiv.mid_F,xend=hiv.mid_M,
-                       y=BMI.mid_F,yend=BMI.mid_M,
-                       group=paste0(iso3,acat)),col='grey')+
-  geom_text_repel(show.legend = FALSE)+
+  geom_text_repel(show.legend = FALSE,max.overlaps=50)+
   facet_wrap(~acat)+
   geom_abline(intercept = 0,slope=1,col=2)+
   theme_linedraw()+theme(legend.position='top')+
   xlab('PAF for HIV/ART')+ylab('PAF for BMI')
 
-ggsave(GP,file=here('plots/PAFsexCF.png'),h=5,w=10)
+GP + geom_segment(data=tmp,aes(x=hiv.mid_F,xend=hiv.mid_M,
+                            y=BMI.mid_F,yend=BMI.mid_M,
+                            group=paste0(iso3,acat)),col='grey')
+
+ggsave(GP,file=here('plots/PAFsexCF.png'),h=8,w=15)
 
 ## TODO perhaps incude segments in the above to higlight sex pairings?
 
@@ -261,6 +265,7 @@ IRRS <- merge(IRRS,
               by=c('iso3','acat')) #merge underweight data
 
 ## below for table 1 TODO check unc
+## TODO also include unceretainty in thinness estimates
 IRRS[,thinness:=paste0(rds(th.mid*1e2))]
 IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
 IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
@@ -284,3 +289,13 @@ setcolorder(IRRS,neworder = c("iso3","country",
 fwrite(IRRS,file=here('outdata/PAF.csv'))
 
 
+
+## quick look at RRs for BMI
+GP <- ggplot(DRAML,aes(age,RR,ymin=RR-RR.sd*1.96,ymax=RR+RR.sd*1.96,col=sex,group=sex,fill=sex))+
+  geom_ribbon(col=NA,alpha=0.3)+
+  geom_line()+
+  facet_wrap(~Country)+
+  theme_linedraw()+theme(legend.position='top')+
+  xlab('Age in years')+ylab('Risk ratio for TB due to BMI distribution')
+
+ggsave(GP,file=here('plots/bmiRRbyage.png'),h=10,w=10)

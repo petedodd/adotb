@@ -103,33 +103,56 @@ if(file.exists(fn)){
   load(fn)
 } else {
   N <- fread('~/Dropbox/Documents/WHO_TBreports/data2020/TB_notifications_2020-10-15.csv')
-  NR <- N[year==2019,.(iso3,n1014=newrel_m1014+newrel_f1014,n1519=newrel_m1519+newrel_f1519)]
+  NR <- N[year==2019,.(iso3,
+                       n1014=newrel_m1014+newrel_f1014,
+                       n1519=newrel_m1519+newrel_f1519,
+                       n1014m=newrel_m1014,n1014f=newrel_f1014,
+                       n1519m=newrel_m1519,n1519f=newrel_f1519)]
   NR <- melt(NR,id='iso3')
   NR[,acat:='10-14']
   NR[grepl('19',variable),acat:='15-19']
-  NR <- NR[,.(iso3,acat,
+  NR[,sex:='B']
+  NR[grepl('m',variable),sex:='M']; NR[grepl('f',variable),sex:='F']
+  NR <- NR[,.(iso3,acat,sex,
               notified=value)]
   NR <- NR[iso3 %in% unique(rnra$iso3)]
   save(NR,file=fn)
 }
 
-## aggregate over ages
-rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
-               by=.(iso3,acat,replicate,mixing)] #mean over ages
+## ## aggregate over ages
+## rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
+##                by=.(iso3,acat,replicate,mixing)] #mean over ages
 
 ## relative risk data
 load(gh('PAF/data/IRR.Rdata'))
+load(here('PAF/data/DRAgamma.Rdata')) #BMI data by age & sex
 
 ## include HIV & pop
+DRA <- merge(DRA[,.(Country,Sex,age,RR,RR.sd)],ckey[,.(iso3,Country=newcountry)],by='Country')
+DRA[,sex:=ifelse(Sex=='Boys','M','F')]
+DRA <- DRA[age>9]
+
+## include sex in rnra
+nn <- nrow(rnra)
+rnra <- rnra[rep(1:nn,2)]
+rnra[,sex:=c(rep('F',nn),rep('M',nn))]
+## merge in
+rnra <- merge(rnra,DRA[,.(iso3,sex,age,RR,RR.sd)],
+              by=c('iso3','sex','age'))
+rnra[,RR:=rnorm(nrow(rnra),mean=RR,sd=RR.sd)]
+## TODO include some outputs on patterning by age within groups?
+
+rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0),IRRthin=mean(RR)),
+               by=.(iso3,sex,acat,replicate,mixing)] #mean over ages
 rnr <- merge(rnr,
-             IRR[,.(value=pop,iso3,acat,replicate,
-                    h,irr,thin,IRRthin)],
-             by=c('iso3','acat','replicate'))
+             IRR[,.(value=pop,iso3,acat,sex,replicate,
+                    hiv,irr)],
+             by=c('iso3','sex','acat','replicate'))
 rnr[,LTBI:=P*value]
 rnr[,LTBI1:=P1*value]
 rnr[,LTBI2:=P2*value]
 rnr[,inc.num0:=inc0*value]
-rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)]
+rnr[,inc:=inc0 * (1-hiv+hiv*irr)*(1-1.0 + 1.0*IRRthin)]
 rnr[,inc.num:=inc*value]
 
 
@@ -152,6 +175,25 @@ rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 ),
              by=.(iso3,acat,mixing)] #mean/hi/lo
 
+rnrss2 <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
+                LTBI.mid=mean(LTBI),
+                inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
+                LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
+                LTBI1.lo=lo(LTBI1),P1.lo=mean(P1),
+                LTBI1.hi=hi(LTBI1),P1.hi=mean(P1),
+                LTBI2.mid=mean(LTBI2),P2.mid=mean(P2),
+                LTBI2.lo=lo(LTBI2),P2.lo=mean(P2),
+                LTBI2.hi=hi(LTBI2),P2.hi=mean(P2),
+                P.lo=lo(P),P.hi=hi(P),
+                inc0.hi=hi(inc0),inc0.lo=lo(inc0),
+                inc.hi=hi(inc),inc.lo=lo(inc),
+                LTBI.lo=lo(LTBI), LTBI.hi=hi(LTBI),
+                inc.num0.hi=hi(inc.num0),inc.num0.lo=lo(inc.num0),
+                inc.num.hi=hi(inc.num),inc.num.lo=lo(inc.num)
+                ),
+             by=.(iso3,sex,acat,mixing)] #mean/hi/lo
+
+
 ## LTBI TOTAL
 rnrtot <- rnr[,.(P=weighted.mean(P,value),
                  P1=weighted.mean(P1,value),
@@ -167,6 +209,24 @@ rnrtot <- rnrtot[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
                     P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
                     LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
                  by=.(acat,mixing)]
+
+## by sex
+rnrtot2 <- rnr[,.(P=weighted.mean(P,value),
+                 P1=weighted.mean(P1,value),
+                 P2=weighted.mean(P2,value),
+                 LTBI=sum(LTBI),
+                 LTBI1=sum(LTBI1),
+                 LTBI2=sum(LTBI2)
+                 ), by=.(sex,acat,replicate,mixing)]
+rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
+                    LTBI.mid=mean(LTBI),LTBI1.mid=mean(LTBI1),LTBI2.mid=mean(LTBI2),
+                    P.lo=lo(P),P1.lo=lo(P1),P2.lo=lo(P2),
+                    LTBI.lo=lo(LTBI),LTBI1.lo=lo(LTBI1),LTBI2.lo=lo(LTBI2),
+                    P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
+                    LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
+                 by=.(sex,acat,mixing)]
+
+
 ## inc totals
 rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
@@ -178,6 +238,18 @@ rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
 rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
 rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
 rnrtot[,iso3:='TOTAL']
+
+## by sex
+rnrtoti2 <- rnrss2[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
+                    inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
+                    inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
+                    ),by=.(acat,sex,mixing)]
+rnrtoti2[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
+           .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
+             inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
+rnrtoti2[,c('inc.num0.sd','inc.num.sd'):=NULL]
+rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('acat','mixing'))
+rnrtot2[,iso3:='TOTAL']
 
 (tnmz <- names(rnrtot))
 smy <- rbind(rnrss[,..tnmz],rnrtot) #TODO
@@ -199,7 +271,7 @@ smys <- smy[,.(iso3,mixing,acat,LTBI.fmt,
 
 print(smy[iso3=='TOTAL' & mixing=='assortative',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
 
-smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
+smy <- merge(smy,NR[sex=='B'],by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
 smy[,CDR0:=1e2*notified/inc.num0.mid]
 smy[,CDR:=1e2*notified/inc.num.mid]
 
@@ -248,6 +320,7 @@ setcolorder(out.inc,c("iso3","mixing","RF",
 
 fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
 
+## TODO sex-based versions
 
 ## reformat for plotting
 smy2 <- smy[,.(iso3,mixing,acat,notified,
@@ -319,7 +392,7 @@ ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
-## per capita version of Ibar
+## per capita version of Ibar BUG
 pops <- unique(IRR[,.(iso3,acat,pop)])
 popst <- pops[,.(pop=sum(pop)),by=acat]
 popst[,iso3:='TOTAL']
