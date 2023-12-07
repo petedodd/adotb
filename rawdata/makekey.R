@@ -92,4 +92,6 @@ ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
 ckey[UN=="Papua New Guinea",newcountry:="PNG"]
 
 
+
+
 save(ckey,file=here('rawdata/ckey.Rdata'))
