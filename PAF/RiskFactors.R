@@ -338,3 +338,43 @@ GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
 
 ggsave(GPP,file=here('plots/MFcountry.png'),h=7,w=7)
 
+## comparison with notifications
+fn <- gh('progression/data/NR.Rdata')
+if(file.exists(fn)){
+  load(fn)
+} else {
+  N <- fread('~/Dropbox/Documents/WHO_TBreports/data2020/TB_notifications_2020-10-15.csv')
+  NR <- N[year==2019,.(iso3,
+                       n1014=newrel_m1014+newrel_f1014,
+                       n1519=newrel_m1519+newrel_f1519,
+                       n1014m=newrel_m1014,n1014f=newrel_f1014,
+                       n1519m=newrel_m1519,n1519f=newrel_f1519)]
+  NR <- melt(NR,id='iso3')
+  NR[,acat:='10-14']
+  NR[grepl('19',variable),acat:='15-19']
+  NR[,sex:='B']
+  NR[grepl('m',variable),sex:='M']; NR[grepl('f',variable),sex:='F']
+  NR <- NR[,.(iso3,acat,sex,
+              notified=value)]
+  NR <- NR[iso3 %in% unique(rnra$iso3)]
+  save(NR,file=fn)
+}
+
+NR <- dcast(NR[sex!='B'],iso3+acat~sex,value.var='notified')
+NR[,nmf:=M/F]
+NR <- merge(MF,NR[,.(iso3,acat,nmf)],by=c('iso3','acat'))
+NR <- NR[!is.na(nmf)]
+
+
+ggplot(NR,aes(nmf,mf,ymin=mf.lo,ymax=mf.hi,col=age,shape=age,label=iso3))+
+  geom_pointrange()+
+  geom_text_repel(show.legend=FALSE)+
+  geom_abline(slope=1,intercept=0,col=2)+
+  geom_abline(slope=0,intercept=1,col=2,lty=2)+
+  geom_vline(xintercept=1,col=2,lty=2)+
+  theme_classic()+ggpubr::grids()+
+  xlab('MF ratio in TB notifications')+
+  ylab('MF ratio due to BMI & HIV')+
+  theme(legend.position='top')
+
+ggsave(file=here('plots/MFcountryVNotes.png'),h=7,w=10)

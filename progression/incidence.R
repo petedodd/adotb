@@ -99,25 +99,7 @@ rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #
 
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
-if(file.exists(fn)){
-  load(fn)
-} else {
-  N <- fread('~/Dropbox/Documents/WHO_TBreports/data2020/TB_notifications_2020-10-15.csv')
-  NR <- N[year==2019,.(iso3,
-                       n1014=newrel_m1014+newrel_f1014,
-                       n1519=newrel_m1519+newrel_f1519,
-                       n1014m=newrel_m1014,n1014f=newrel_f1014,
-                       n1519m=newrel_m1519,n1519f=newrel_f1519)]
-  NR <- melt(NR,id='iso3')
-  NR[,acat:='10-14']
-  NR[grepl('19',variable),acat:='15-19']
-  NR[,sex:='B']
-  NR[grepl('m',variable),sex:='M']; NR[grepl('f',variable),sex:='F']
-  NR <- NR[,.(iso3,acat,sex,
-              notified=value)]
-  NR <- NR[iso3 %in% unique(rnra$iso3)]
-  save(NR,file=fn)
-}
+load(fn)
 
 ## ## aggregate over ages
 ## rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
