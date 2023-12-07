@@ -317,12 +317,12 @@ lvls <- unique(tmp[der,iso3])
 MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
 MF[,age:=acat]
 
-pd <- position_dodge(0.1)
+pd <- position_dodge(0.25)
 GPP <- ggplot(MF[der],aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
-  geom_pointrange(position=pd)+
+  geom_pointrange(position=pd,shape=1)+
   coord_flip()+
   theme_classic()+theme(legend.position='top')+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios due to HIV & BMI')+
   geom_hline(yintercept = 1,col='grey',lty=2)
 
-ggsave(GPP,file=here('plots/MFcountry.png'),h=10,w=7)
+ggsave(GPP,file=here('plots/MFcountry.png'),h=7,w=7)
