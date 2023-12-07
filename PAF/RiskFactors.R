@@ -314,15 +314,27 @@ load(file=here('PAF/data/MF.Rdata'))
 tmp <- MF[acat=='10-14']
 der <- order(tmp$mf)
 lvls <- unique(tmp[der,iso3])
+length(lvls)
 MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
 MF[,age:=acat]
+## text data
+TXT <- dcast(data=MF[,.(iso3,age,mf)],iso3 ~ age,value.var='mf'  )
+TXT[,txtr:=`15-19`/`10-14`]
+TXT[,txt:=round(txtr,2)]
+TXT[,c('mf','mf.lo','mf.hi'):=1.5]
+TXT[,c('sex','age'):=NA]
+TXT <- TXT[iso3 %in% MF$iso3]
 
 pd <- position_dodge(0.25)
-GPP <- ggplot(MF[der],aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
+GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
   geom_pointrange(position=pd,shape=1)+
-  coord_flip()+
+  coord_flip(clip='off')+
   theme_classic()+theme(legend.position='top')+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios due to HIV & BMI')+
-  geom_hline(yintercept = 1,col='grey',lty=2)
+  geom_hline(yintercept = 1,col='grey',lty=2) +
+  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
+  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
+## GPP
 
 ggsave(GPP,file=here('plots/MFcountry.png'),h=7,w=7)
+
