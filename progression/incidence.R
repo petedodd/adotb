@@ -96,7 +96,6 @@ rnra[,prog.slow:=tmp]
 rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
 
 
-
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
 load(fn)
@@ -139,7 +138,14 @@ rnr[,inc.num:=inc*value]
 
 
 ## summarize
-rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
+rnrss <- rnr[,.(P=mean(P),inc0=mean(inc0),inc=mean(inc),
+                LTBI=sum(LTBI),
+                inc.num0=sum(inc.num0),inc.num=sum(inc.num),
+                LTBI1=sum(LTBI1),P1=mean(P1),
+                LTBI2=sum(LTBI2),P2=mean(P2)
+                ),
+             by=.(iso3,acat,mixing,replicate)] #mean/hi/lo
+rnrss <- rnrss[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 LTBI.mid=mean(LTBI),
                 inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
                 LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
@@ -210,14 +216,20 @@ rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
 
 
 ## inc totals
-rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
-                    inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
-                    inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
-         ),by=.(acat,mixing)]
-rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
-           .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
-             inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
-rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
+rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
+rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                   by=.(acat,mixing)]
+ 
+## rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
+##                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
+##                     inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
+##          ),by=.(acat,mixing)]
+## rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
+##            .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
+##              inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
+## rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
 rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
 rnrtot[,iso3:='TOTAL']
 
@@ -375,7 +387,8 @@ ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
 ## per capita version of Ibar BUG
-pops <- unique(IRR[,.(iso3,acat,pop)])
+popss <- unique(IRR[,.(iso3,sex,acat,pop)])
+pops <- popss[,.(pop=sum(pop)),by=.(iso3,acat)]
 popst <- pops[,.(pop=sum(pop)),by=acat]
 popst[,iso3:='TOTAL']
 pops <- rbind(pops,popst)
@@ -590,9 +603,10 @@ ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
 
 ggsave(file=here('plots/ratio_age_scatter.png'),h=5,w=5)
 
-
+popl <- unique(IRR[,.(iso3,sex,acat,pop)])
+popl <- popl[,.(pop=sum(pop)),by=.(iso3,acat)]
 nrts <- merge(rats[method=='with risk factors, assortative',.(iso3,acat,incidence)],
-              unique(IRR[,.(iso3,acat,pop)]),by=c('iso3','acat'))
+              popl,by=c('iso3','acat'))
 
 nrts[,pci:=1e5*incidence/pop]
 
