@@ -122,7 +122,6 @@ rnra[,sex:=c(rep('F',nn),rep('M',nn))]
 rnra <- merge(rnra,DRA[,.(iso3,sex,age,RR,RR.sd)],
               by=c('iso3','sex','age'))
 rnra[,RR:=rnorm(nrow(rnra),mean=RR,sd=RR.sd)]
-## TODO include some outputs on patterning by age within groups?
 
 rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0),IRRthin=mean(RR)),
                by=.(iso3,sex,acat,replicate,mixing)] #mean over ages
@@ -215,28 +214,6 @@ rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
                     LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
                  by=.(sex,acat,mixing)]
 
-
-
-## rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
-##                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
-##                     inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
-##          ),by=.(acat,mixing)]
-## rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
-##            .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
-##              inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
-## rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
-
-
-## rnrtoti2 <- rnrss2[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
-##                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
-##                     inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
-##                     ),by=.(acat,sex,mixing)]
-## rnrtoti2[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
-##            .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
-##              inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
-## rnrtoti2[,c('inc.num0.sd','inc.num.sd'):=NULL]
-## rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('acat','mixing'))
-## rnrtot2[,iso3:='TOTAL']
 
 ## inc totals
 rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
@@ -374,9 +351,6 @@ ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
 
 
-
-
-
 ## barplot version
 smy2[,fmeth:=paste0(method,', ',mixing)]
 smy2[is.na(newcountry),newcountry:='TOTAL']
@@ -428,7 +402,6 @@ ggsave(plt,file=here('plots/IbarPC.png'),h=9,w=12)
 
 
 
-
 ## === sex-based versions for plotting
 (tnmz <- names(rnrtot2))
 smys <- rbind(rnrss2[,..tnmz],rnrtot2)
@@ -438,13 +411,16 @@ smys2 <- smys[,.(iso3,mixing,sex,acat,notified,
                  inc.num0.mid,inc.num0.lo,inc.num0.hi,
                  inc.num.mid,inc.num.lo,inc.num.hi
                  )]
+
 smys2 <- melt(smys2,id=c('iso3','sex','acat','notified','mixing'))
 smys2[,method:='with risk factors']
 smys2[grepl('0',variable),method:='without risk factors']
 smys2[,variable:=gsub('0','',variable)]
 smys2 <- dcast(smys2,iso3+sex+acat+notified+method + mixing ~ variable,value.var = 'value')
 smys2 <- merge(smys2,ckey,by = 'iso3',all.x=TRUE)
-
+smys2[iso3=='TOTAL',newcountry:='TOTAL']
+## smys2[iso3=='TOTAL']
+## smys2[iso3=='AGO']
 
 ## plot
 m <- 3e5
@@ -479,7 +455,6 @@ ggsave(plt,file=here('plots/IvNsex.png'),h=14,w=14)
 
 ## barplot version
 smys2[,fmeth:=paste0(method,', ',mixing)]
-smys2[is.na(newcountry),newcountry:='TOTAL']
 cnys <- unique(smys2$newcountry)
 cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
 smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
@@ -505,11 +480,16 @@ ggsave(plt,file=here('plots/Ibarsex.png'),h=12,w=12)
 
 
 ## per capita version of Ibar
+popss <- unique(IRR[,.(iso3,sex,acat,pop)])
 popsst <- popss[,.(pop=sum(pop)),by=.(sex,acat)]
 popsst[,iso3:='TOTAL']
 popss <- rbind(popss,popsst)
 smys3 <- merge(smys2,popss,by=c('iso3','sex','acat'),all.x=TRUE)
-smys3[,ymx:=max(1e5*inc.num.mid/pop),by=.(iso3,acat)] #y-max
+smys3[,ymx:=pmax(1e5*inc.num.mid/pop,1e5*notified/pop,na.rm=TRUE),by=.(iso3,acat)] #y-max
+## popss[iso3=='TOTAL']
+## smys3[iso3=='TOTAL']
+## smys3[iso3=='AGO']
+
 
 plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
   geom_bar(stat='identity',position = dog)+
@@ -525,13 +505,74 @@ plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
         ggh4x.facet.nestline = element_line(colour = "grey"))
 plt
 
+
+## ## BUG:
+## ## make scales
+## ypsns <- list()
+## for(iso in unique(smys3$iso3)){
+##   ylm <- smys3[iso3==iso,ymx][1]
+##   ncy <- smys3[iso3==iso,newcountry][1]
+##   ypsns[[iso]] <- as.formula(paste0("newcountry == '",ncy,
+##                                     "' ~  scale_y_continuous(label = comma,limits = c(0,",ylm,") )"))
+## }
+
+## plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+##   geom_bar(stat='identity',position = dog)+
+##   geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+##   geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+##   facet_nested_wrap(~newcountry+sex,scales='free')+
+##   facetted_pos_scales(y = ypsns)+
+##   scale_fill_colorblind(name=NULL)+
+##   ## scale_y_continuous(label = comma)+
+##   xlab('Age group (years)')+
+##   ylab('Tuberculosis incidence 2019 (per 100,000)')+
+##   theme(legend.position = 'top',legend.direction = 'horizontal')+
+##   theme(strip.background = element_blank(),
+##         ggh4x.facet.nestline = element_line(colour = "grey"))
+## plt
+
 ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
 ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
 
-## TODO unsure if possible to have fixed/free by nesting
-## + facetted_pos_scales(
-##     y = list(Nester == "Long Leaves" ~ scale_y_continuous(limits = ylim))
-##   )
+
+## full version of MF ratios
+MF <- melt(smys3[iso3!='TOTAL',.(newcountry,method=fmeth,sex,acat,inc=inc.num.mid)],
+           id=c('newcountry','method','sex','acat'))
+MF[,variable:=NULL]
+MF <- dcast(data=MF,newcountry+method+acat~sex,value.var='value')
+MF[,mf:=M/F]
+tmp <- MF[acat=='10-14' & method=='with risk factors, random']
+der <- order(tmp$mf)
+lvls <- unique(tmp[der,newcountry])
+length(lvls)
+MF$newcountry <- factor(MF$newcountry,levels=lvls,ordered=TRUE)
+MF[,age:=acat]
+
+## text data
+TXT <- dcast(data=MF[,.(newcountry,method,age,mf)],newcountry+method ~ age,value.var='mf'  )
+TXT[,txtr:=`15-19`/`10-14`]
+TXT[,txt:=round(txtr,2)]
+TXT[,c('mf','mf.lo','mf.hi'):=1.5]
+TXT[,c('sex','age'):=NA]
+TXT <- TXT[newcountry %in% MF$newcountry]
+TXT[method!='with risk factors, assortative',txt:=NA]
+
+pd <- position_dodge(0.25)
+GPP <- ggplot(MF,aes(newcountry,mf,## ymin=mf.lo,ymax=mf.hi,
+                     col=age,shape=method))+
+  geom_point()+
+  ## geom_pointrange(position=pd,shape=1)+ # TODO unc
+  coord_flip(clip='off')+
+  theme_classic()+theme(legend.position='top',)+ggpubr::grids()+
+  xlab('Country')+ylab('M:F ratio of risk ratios')+
+  geom_hline(yintercept = 1,col='grey',lty=2) +
+  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
+  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)## +
+  ## guides(guide_legend(nrow=2,byrow=TRUE))
+GPP
+
+ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
+
 
 
 
