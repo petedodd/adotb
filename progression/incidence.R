@@ -10,6 +10,7 @@ library(glue)
 library(HEdtree)
 library(ggarchery)
 library(ungeviz)
+library(ggh4x)
 
 ## utility functions
 ssum <- function(x) sqrt(sum(x^2))
@@ -215,13 +216,7 @@ rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
                  by=.(sex,acat,mixing)]
 
 
-## inc totals
-rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
-rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
-                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
-                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
-                   by=.(acat,mixing)]
- 
+
 ## rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
 ##                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
 ##                     inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
@@ -230,27 +225,46 @@ rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
 ##            .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
 ##              inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
 ## rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
+
+
+## rnrtoti2 <- rnrss2[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
+##                     inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
+##                     inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
+##                     ),by=.(acat,sex,mixing)]
+## rnrtoti2[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
+##            .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
+##              inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
+## rnrtoti2[,c('inc.num0.sd','inc.num.sd'):=NULL]
+## rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('acat','mixing'))
+## rnrtot2[,iso3:='TOTAL']
+
+## inc totals
+rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
+rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                   by=.(acat,mixing)]
 rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
 rnrtot[,iso3:='TOTAL']
 
 ## by sex
-rnrtoti2 <- rnrss2[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
-                    inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
-                    inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
-                    ),by=.(acat,sex,mixing)]
-rnrtoti2[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
-           .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
-             inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
-rnrtoti2[,c('inc.num0.sd','inc.num.sd'):=NULL]
-rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('acat','mixing'))
+rnrtoti2 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,acat,mixing,replicate)]
+rnrtoti2 <- rnrtoti2[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                   by=.(sex,acat,mixing)]
+rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('sex','acat','mixing'))
 rnrtot2[,iso3:='TOTAL']
 
-(tnmz <- names(rnrtot))
-smy <- rbind(rnrss[,..tnmz],rnrtot) #TODO
+## for getting levels correct
 lvls <- rnr[,unique(iso3)]
 lvls <- lvls[lvls!='TOTAL']
 lvls <- sort(as.character(lvls))
 lvls <- c(lvls,'TOTAL')
+
+
+(tnmz <- names(rnrtot))
+smy <- rbind(rnrss[,..tnmz],rnrtot)
 smy$iso3 <- factor(smy$iso3,levels=lvls,ordered = TRUE)
 
 smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi)]
@@ -314,7 +328,7 @@ setcolorder(out.inc,c("iso3","mixing","RF",
 
 fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
 
-## TODO sex-based versions
+
 
 ## reformat for plotting
 smy2 <- smy[,.(iso3,mixing,acat,notified,
@@ -360,6 +374,9 @@ ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
 ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
 
 
+
+
+
 ## barplot version
 smy2[,fmeth:=paste0(method,', ',mixing)]
 smy2[is.na(newcountry),newcountry:='TOTAL']
@@ -386,7 +403,7 @@ ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
-## per capita version of Ibar BUG
+## per capita version of Ibar
 popss <- unique(IRR[,.(iso3,sex,acat,pop)])
 pops <- popss[,.(pop=sum(pop)),by=.(iso3,acat)]
 popst <- pops[,.(pop=sum(pop)),by=acat]
@@ -408,6 +425,114 @@ plt
 
 ggsave(plt,file=here('plots/IbarPC.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/IbarPC.png'),h=9,w=12)
+
+
+
+
+## === sex-based versions for plotting
+(tnmz <- names(rnrtot2))
+smys <- rbind(rnrss2[,..tnmz],rnrtot2)
+smys <- merge(smys,NR[sex!='B'],by=c('iso3','sex','acat'),all.x=TRUE,all.y = FALSE)
+smys$iso3 <- factor(smys$iso3,levels=lvls,ordered = TRUE)
+smys2 <- smys[,.(iso3,mixing,sex,acat,notified,
+                 inc.num0.mid,inc.num0.lo,inc.num0.hi,
+                 inc.num.mid,inc.num.lo,inc.num.hi
+                 )]
+smys2 <- melt(smys2,id=c('iso3','sex','acat','notified','mixing'))
+smys2[,method:='with risk factors']
+smys2[grepl('0',variable),method:='without risk factors']
+smys2[,variable:=gsub('0','',variable)]
+smys2 <- dcast(smys2,iso3+sex+acat+notified+method + mixing ~ variable,value.var = 'value')
+smys2 <- merge(smys2,ckey,by = 'iso3',all.x=TRUE)
+
+
+## plot
+m <- 3e5
+plt <- ggplot(smys2[method=='with risk factors' & mixing=='assortative'],
+              aes(x=notified,y=inc.num.mid,
+                  ymin=inc.num.lo,ymax=inc.num.hi,
+                  label=newcountry)) +
+  geom_abline(slope=1,intercept = 0,col=2)+
+  geom_arrowsegment(data=smys2,
+                    aes(x = notified-1e5*sqrt(notified/2e5)/4,
+                        xend = notified, y = inc.num.mid, yend = inc.num.mid,
+                        fill=paste0(method,', ',mixing),
+                        col=paste0(method,', ',mixing)),
+                    arrows = arrow(type = 'closed',length = unit(0.07, "inches")))+
+  geom_point(size=2,shape=1) +
+  geom_errorbar(width=10,alpha=0.75)+
+  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = 1e2,nudge_y = 20)+
+  scale_x_sqrt(limits=c(0,m),label=comma)+
+  scale_y_sqrt(limits=c(0,m),label=comma)+
+  scale_fill_colorblind(name=NULL)+
+  scale_color_colorblind(name=NULL)+
+  facet_grid(sex~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+  ylab('Estimated tuberculosis incidence 2019 (sqrt scale)')+
+  xlab('Notified tuberculosis 2019 (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+plt
+
+
+ggsave(plt,file=here('plots/IvNsex.pdf'),h=14,w=14)
+ggsave(plt,file=here('plots/IvNsex.png'),h=14,w=14)
+
+
+## barplot version
+smys2[,fmeth:=paste0(method,', ',mixing)]
+smys2[is.na(newcountry),newcountry:='TOTAL']
+cnys <- unique(smys2$newcountry)
+cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
+smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
+dog <- position_dodge()
+
+
+plt <- ggplot(smys2,aes(acat,y=inc.num.mid,fill=fmeth))+
+  geom_bar(stat='identity',position = dog)+
+  geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
+  facet_nested_wrap(~newcountry+sex,scales='free_y')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019')+
+  theme(legend.position = 'top',legend.direction = 'horizontal')+
+  theme(strip.background = element_blank(),
+        ggh4x.facet.nestline = element_line(colour = "grey"))
+plt
+
+ggsave(plt,file=here('plots/Ibarsex.pdf'),h=12,w=12)
+ggsave(plt,file=here('plots/Ibarsex.png'),h=12,w=12)
+
+
+## per capita version of Ibar
+popsst <- popss[,.(pop=sum(pop)),by=.(sex,acat)]
+popsst[,iso3:='TOTAL']
+popss <- rbind(popss,popsst)
+smys3 <- merge(smys2,popss,by=c('iso3','sex','acat'),all.x=TRUE)
+smys3[,ymx:=max(1e5*inc.num.mid/pop),by=.(iso3,acat)] #y-max
+
+plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+  geom_bar(stat='identity',position = dog)+
+  geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+  facet_nested_wrap(~newcountry+sex,scales='free')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019 (per 100,000)')+
+  theme(legend.position = 'top',legend.direction = 'horizontal')+
+  theme(strip.background = element_blank(),
+        ggh4x.facet.nestline = element_line(colour = "grey"))
+plt
+
+ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
+ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
+
+## TODO unsure if possible to have fixed/free by nesting
+## + facetted_pos_scales(
+##     y = list(Nester == "Long Leaves" ~ scale_y_continuous(limits = ylim))
+##   )
+
 
 
 ## percentages
