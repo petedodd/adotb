@@ -535,45 +535,40 @@ ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
 ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
 
 
-## full version of MF ratios
-MF <- melt(smys3[iso3!='TOTAL',.(newcountry,method=fmeth,sex,acat,inc=inc.num.mid)],
-           id=c('newcountry','method','sex','acat'))
-MF[,variable:=NULL]
-MF <- dcast(data=MF,newcountry+method+acat~sex,value.var='value')
+## --- MF plot -------
+MF <- rnr[,.(inc0,inc),
+          by=.(iso3,sex,acat,mixing,replicate)]
+MF <- melt(MF,id=c('iso3','sex','acat','mixing','replicate'))
+MF[,variable:=ifelse(grepl(0,variable),'no risk factors','with risk factors')]
+MF <- dcast(data=MF,iso3+mixing+variable+replicate+acat ~ sex)
 MF[,mf:=M/F]
-tmp <- MF[acat=='10-14' & method=='with risk factors, random']
-der <- order(tmp$mf)
-lvls <- unique(tmp[der,newcountry])
-length(lvls)
-MF$newcountry <- factor(MF$newcountry,levels=lvls,ordered=TRUE)
-MF[,age:=acat]
-
-## text data
-TXT <- dcast(data=MF[,.(newcountry,method,age,mf)],newcountry+method ~ age,value.var='mf'  )
-TXT[,txtr:=`15-19`/`10-14`]
+MF <- MF[,.(mf=mean(mf),mf.lo=lo(mf),mf.hi=hi(mf)),by=.(iso3,mixing,variable,acat)]
+MF <- MF[variable!='no risk factors']
+TXT <- dcast(data=MF,iso3 ~ mixing + variable + acat,value.var='mf')
+TXT[,txtr:=`assortative_with risk factors_15-19`/`assortative_with risk factors_10-14`]
 TXT[,txt:=round(txtr,2)]
 TXT[,c('mf','mf.lo','mf.hi'):=1.5]
-TXT[,c('sex','age'):=NA]
-TXT <- TXT[newcountry %in% MF$newcountry]
-TXT[method!='with risk factors, assortative',txt:=NA]
+TXT[,c('sex','acat','mixing','variable'):=NA]
+tmp <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='random']
+der <- order(tmp$mf)
+lvls <- unique(tmp[der,iso3])
+MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
+MF[,age:=acat]
+TXT[,age:=acat]
 
 pd <- position_dodge(0.25)
-GPP <- ggplot(MF,aes(newcountry,mf,## ymin=mf.lo,ymax=mf.hi,
-                     col=age,shape=method))+
-  geom_point()+
-  ## geom_pointrange(position=pd,shape=1)+ # TODO unc
+GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,
+                     col=age,shape=mixing))+
+  geom_pointrange(position=pd,shape=1)+
   coord_flip(clip='off')+
   theme_classic()+theme(legend.position='top',)+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios')+
   geom_hline(yintercept = 1,col='grey',lty=2) +
   geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
-  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)## +
-  ## guides(guide_legend(nrow=2,byrow=TRUE))
+  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
 GPP
 
 ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
-
-
 
 
 ## percentages
