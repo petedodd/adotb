@@ -46,12 +46,29 @@ rnr <- rbindlist(rnr)
 load(gh('LTBI/data/RR.Rdata'))
 rnr <- merge(rnr,RR,by='iso3',all.x = TRUE, all.y = FALSE)
 
+## sex ratios?
+SR <- fread(here('rawdata/TB_burden_age_sex_2020-10-15.csv'))
+SR <- SR[age_group=='15plus' & risk_factor=='all' & sex!='a',.(iso3,sex,best)]
+SR <- dcast(data=SR,iso3~sex,value.var='best')
+SR[,sr:=(m+1)/(f+1)]
+av <- SR[,sum(m)/sum(f)]
+SR[m+f<1e2,sr:=av] #average for countries where this is small
+SR <- SR[,.(iso3,sr)]
+
 ## work on converting this to LTBI
 rnr[,ari:=exp(lari)]          #true ARI
 rnr[,year:= 2019 - year]       #age
 rnr <- rnr[order(replicate,iso3,year)] #order
 rnr <- rnr[year<20]
 
+## merge in sex stuff
+## KH review: M  56% (IQR 54%–58%), F 59 (IQR 57%–63%)
+## m=56.5 IQR 54-63 -> SD=(63-54)/1.35
+## HEdtree::getAB(0.565,((63-54)/135)^2)
+rnr <- merge(rnr,SR,by='iso3',all.x=TRUE)
+rnr[,assort:=rbeta(nrow(rnr),30.67915,23.62023)]
+rnr[,Rf:=(assort/(1+sr) + (1-assort)/(1+1/sr))*2]
+rnr[,Rm:=((1-assort)/(1+sr) + assort/(1+1/sr))*2]
 
 ## better way to do below calx?
 ## year = years ago
@@ -61,19 +78,31 @@ rnr <- rnr[order(replicate,iso3,year)] #order
 tmpl <- list()
 for(a in 10:19){
   rnr[,rrt:=1.0]
+  rnr[,c('rrtf','rrtm'):=1.0]
   rnr[year<=a-15,rrt:=rr,by=.(iso3,replicate)] #RR applies only to years lived over 15
+  rnr[year<=a-15,rrtf:=Rf,by=.(iso3,replicate)] #RR applies only to years lived over 15
+  rnr[year<=a-15,rrtm:=Rm,by=.(iso3,replicate)] #RR applies only to years lived over 15
   tmp <- rnr[year<a,.(random.H=sum(ari),
                       random.dH2=sum(ari[1:2]),
                       random.dH1=sum(ari[1]),
                       assortative.H=sum(ari*rrt),
                       assortative.dH2=sum(ari[1:2]*rrt[1:2]),
-                      assortative.dH1=sum(ari[1]*rrt[1])),
+                      assortative.dH1=sum(ari[1]*rrt[1]),
+                      ## males
+                      assortative.H_m=sum(ari*rrt*Rm),
+                      assortative.dH2_m=sum(ari[1:2]*rrt[1:2]*Rm[1:2]),
+                      assortative.dH1_m=sum(ari[1]*rrt[1]*Rm[1]),
+                      ## females
+                      assortative.H_f=sum(ari*rrt*Rm),
+                      assortative.dH2_f=sum(ari[1:2]*rrt[1:2]*Rf[1:2]),
+                      assortative.dH1_f=sum(ari[1]*rrt[1]*Rf[1])),
              by=.(iso3,replicate)]
   tmp[,age:=a]
   tmpl[[a]] <- tmp
 }
 tmpl <- rbindlist(tmpl)
 
+## TODO BUG in this
 
 ## reshape
 tmp <- melt(tmpl,id=c('iso3','replicate','age'))
