@@ -10,6 +10,7 @@ library(glue)
 library(HEdtree)
 library(ggarchery)
 library(ungeviz)
+library(ggh4x)
 
 ## utility functions
 ssum <- function(x) sqrt(sum(x^2))
@@ -96,45 +97,55 @@ rnra[,prog.slow:=tmp]
 rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
 
 
-
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
-if(file.exists(fn)){
-  load(fn)
-} else {
-  N <- fread('~/Dropbox/Documents/WHO_TBreports/data2020/TB_notifications_2020-10-15.csv')
-  NR <- N[year==2019,.(iso3,n1014=newrel_m1014+newrel_f1014,n1519=newrel_m1519+newrel_f1519)]
-  NR <- melt(NR,id='iso3')
-  NR[,acat:='10-14']
-  NR[grepl('19',variable),acat:='15-19']
-  NR <- NR[,.(iso3,acat,
-              notified=value)]
-  NR <- NR[iso3 %in% unique(rnra$iso3)]
-  save(NR,file=fn)
-}
+load(fn)
 
-## aggregate over ages
-rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
-               by=.(iso3,acat,replicate,mixing)] #mean over ages
+## ## aggregate over ages
+## rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
+##                by=.(iso3,acat,replicate,mixing)] #mean over ages
 
 ## relative risk data
 load(gh('PAF/data/IRR.Rdata'))
+load(here('PAF/data/DRAgamma.Rdata')) #BMI data by age & sex
 
 ## include HIV & pop
+DRA <- merge(DRA[,.(Country,Sex,age,RR,RR.sd)],ckey[,.(iso3,Country=newcountry)],by='Country')
+DRA[,sex:=ifelse(Sex=='Boys','M','F')]
+DRA <- DRA[age>9]
+
+## include sex in rnra
+nn <- nrow(rnra)
+rnra <- rnra[rep(1:nn,2)]
+rnra[,sex:=c(rep('F',nn),rep('M',nn))]
+## merge in
+rnra <- merge(rnra,DRA[,.(iso3,sex,age,RR,RR.sd)],
+              by=c('iso3','sex','age'))
+rnra[,RR:=rnorm(nrow(rnra),mean=RR,sd=RR.sd)]
+
+rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0),IRRthin=mean(RR)),
+               by=.(iso3,sex,acat,replicate,mixing)] #mean over ages
 rnr <- merge(rnr,
-             IRR[,.(value=pop,iso3,acat,replicate,
-                    h,irr,thin,IRRthin)],
-             by=c('iso3','acat','replicate'))
+             IRR[,.(value=pop,iso3,acat,sex,replicate,
+                    hiv,irr)],
+             by=c('iso3','sex','acat','replicate'))
 rnr[,LTBI:=P*value]
 rnr[,LTBI1:=P1*value]
 rnr[,LTBI2:=P2*value]
 rnr[,inc.num0:=inc0*value]
-rnr[,inc:=inc0 * (1-h+h*irr)*(1-thin + thin*IRRthin)]
+rnr[,inc:=inc0 * (1-hiv+hiv*irr)*(1-1.0 + 1.0*IRRthin)]
 rnr[,inc.num:=inc*value]
 
 
 ## summarize
-rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
+rnrss <- rnr[,.(P=mean(P),inc0=mean(inc0),inc=mean(inc),
+                LTBI=sum(LTBI),
+                inc.num0=sum(inc.num0),inc.num=sum(inc.num),
+                LTBI1=sum(LTBI1),P1=mean(P1),
+                LTBI2=sum(LTBI2),P2=mean(P2)
+                ),
+             by=.(iso3,acat,mixing,replicate)] #mean/hi/lo
+rnrss <- rnrss[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 LTBI.mid=mean(LTBI),
                 inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
                 LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
@@ -152,6 +163,25 @@ rnrss <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 ),
              by=.(iso3,acat,mixing)] #mean/hi/lo
 
+rnrss2 <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
+                LTBI.mid=mean(LTBI),
+                inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
+                LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
+                LTBI1.lo=lo(LTBI1),P1.lo=mean(P1),
+                LTBI1.hi=hi(LTBI1),P1.hi=mean(P1),
+                LTBI2.mid=mean(LTBI2),P2.mid=mean(P2),
+                LTBI2.lo=lo(LTBI2),P2.lo=mean(P2),
+                LTBI2.hi=hi(LTBI2),P2.hi=mean(P2),
+                P.lo=lo(P),P.hi=hi(P),
+                inc0.hi=hi(inc0),inc0.lo=lo(inc0),
+                inc.hi=hi(inc),inc.lo=lo(inc),
+                LTBI.lo=lo(LTBI), LTBI.hi=hi(LTBI),
+                inc.num0.hi=hi(inc.num0),inc.num0.lo=lo(inc.num0),
+                inc.num.hi=hi(inc.num),inc.num.lo=lo(inc.num)
+                ),
+             by=.(iso3,sex,acat,mixing)] #mean/hi/lo
+
+
 ## LTBI TOTAL
 rnrtot <- rnr[,.(P=weighted.mean(P,value),
                  P1=weighted.mean(P1,value),
@@ -167,24 +197,51 @@ rnrtot <- rnrtot[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
                     P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
                     LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
                  by=.(acat,mixing)]
+
+## by sex
+rnrtot2 <- rnr[,.(P=weighted.mean(P,value),
+                 P1=weighted.mean(P1,value),
+                 P2=weighted.mean(P2,value),
+                 LTBI=sum(LTBI),
+                 LTBI1=sum(LTBI1),
+                 LTBI2=sum(LTBI2)
+                 ), by=.(sex,acat,replicate,mixing)]
+rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
+                    LTBI.mid=mean(LTBI),LTBI1.mid=mean(LTBI1),LTBI2.mid=mean(LTBI2),
+                    P.lo=lo(P),P1.lo=lo(P1),P2.lo=lo(P2),
+                    LTBI.lo=lo(LTBI),LTBI1.lo=lo(LTBI1),LTBI2.lo=lo(LTBI2),
+                    P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
+                    LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
+                 by=.(sex,acat,mixing)]
+
+
 ## inc totals
-rnrtoti <- rnrss[,.(inc.num.mid=sum(inc.num.mid),inc.num0.mid=sum(inc.num0.mid),
-                    inc.num.sd=ssum(inc.num.hi-inc.num.lo)/3.92,
-                    inc.num0.sd=ssum(inc.num0.hi-inc.num0.lo)/3.92
-         ),by=.(acat,mixing)]
-rnrtoti[,c('inc.num0.lo','inc.num0.hi','inc.num.lo','inc.num.hi'):=
-           .(inc.num0.mid - 1.96*inc.num0.sd, inc.num0.mid + 1.96*inc.num0.sd,
-             inc.num.mid - 1.96*inc.num.sd, inc.num.mid + 1.96*inc.num.sd)]
-rnrtoti[,c('inc.num0.sd','inc.num.sd'):=NULL]
+rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
+rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                   by=.(acat,mixing)]
 rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
 rnrtot[,iso3:='TOTAL']
 
-(tnmz <- names(rnrtot))
-smy <- rbind(rnrss[,..tnmz],rnrtot) #TODO
+## by sex
+rnrtoti2 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,acat,mixing,replicate)]
+rnrtoti2 <- rnrtoti2[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                   by=.(sex,acat,mixing)]
+rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('sex','acat','mixing'))
+rnrtot2[,iso3:='TOTAL']
+
+## for getting levels correct
 lvls <- rnr[,unique(iso3)]
 lvls <- lvls[lvls!='TOTAL']
 lvls <- sort(as.character(lvls))
 lvls <- c(lvls,'TOTAL')
+
+
+(tnmz <- names(rnrtot))
+smy <- rbind(rnrss[,..tnmz],rnrtot)
 smy$iso3 <- factor(smy$iso3,levels=lvls,ordered = TRUE)
 
 smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi)]
@@ -199,7 +256,7 @@ smys <- smy[,.(iso3,mixing,acat,LTBI.fmt,
 
 print(smy[iso3=='TOTAL' & mixing=='assortative',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
 
-smy <- merge(smy,NR,by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
+smy <- merge(smy,NR[sex=='B'],by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
 smy[,CDR0:=1e2*notified/inc.num0.mid]
 smy[,CDR:=1e2*notified/inc.num.mid]
 
@@ -247,6 +304,7 @@ setcolorder(out.inc,c("iso3","mixing","RF",
                       "inc.num.fmt_15-19","notified_15-19","CDR_15-19"   ))
 
 fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
+
 
 
 ## reformat for plotting
@@ -320,7 +378,8 @@ ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
 
 
 ## per capita version of Ibar
-pops <- unique(IRR[,.(iso3,acat,pop)])
+popss <- unique(IRR[,.(iso3,sex,acat,pop)])
+pops <- popss[,.(pop=sum(pop)),by=.(iso3,acat)]
 popst <- pops[,.(pop=sum(pop)),by=acat]
 popst[,iso3:='TOTAL']
 pops <- rbind(pops,popst)
@@ -340,6 +399,176 @@ plt
 
 ggsave(plt,file=here('plots/IbarPC.pdf'),h=9,w=12)
 ggsave(plt,file=here('plots/IbarPC.png'),h=9,w=12)
+
+
+
+## === sex-based versions for plotting
+(tnmz <- names(rnrtot2))
+smys <- rbind(rnrss2[,..tnmz],rnrtot2)
+smys <- merge(smys,NR[sex!='B'],by=c('iso3','sex','acat'),all.x=TRUE,all.y = FALSE)
+smys$iso3 <- factor(smys$iso3,levels=lvls,ordered = TRUE)
+smys2 <- smys[,.(iso3,mixing,sex,acat,notified,
+                 inc.num0.mid,inc.num0.lo,inc.num0.hi,
+                 inc.num.mid,inc.num.lo,inc.num.hi
+                 )]
+
+smys2 <- melt(smys2,id=c('iso3','sex','acat','notified','mixing'))
+smys2[,method:='with risk factors']
+smys2[grepl('0',variable),method:='without risk factors']
+smys2[,variable:=gsub('0','',variable)]
+smys2 <- dcast(smys2,iso3+sex+acat+notified+method + mixing ~ variable,value.var = 'value')
+smys2 <- merge(smys2,ckey,by = 'iso3',all.x=TRUE)
+smys2[iso3=='TOTAL',newcountry:='TOTAL']
+## smys2[iso3=='TOTAL']
+## smys2[iso3=='AGO']
+
+## plot
+m <- 3e5
+plt <- ggplot(smys2[method=='with risk factors' & mixing=='assortative'],
+              aes(x=notified,y=inc.num.mid,
+                  ymin=inc.num.lo,ymax=inc.num.hi,
+                  label=newcountry)) +
+  geom_abline(slope=1,intercept = 0,col=2)+
+  geom_arrowsegment(data=smys2,
+                    aes(x = notified-1e5*sqrt(notified/2e5)/4,
+                        xend = notified, y = inc.num.mid, yend = inc.num.mid,
+                        fill=paste0(method,', ',mixing),
+                        col=paste0(method,', ',mixing)),
+                    arrows = arrow(type = 'closed',length = unit(0.07, "inches")))+
+  geom_point(size=2,shape=1) +
+  geom_errorbar(width=10,alpha=0.75)+
+  geom_text_repel(show.legend = FALSE,max.overlaps = Inf,nudge_x = 1e2,nudge_y = 20)+
+  scale_x_sqrt(limits=c(0,m),label=comma)+
+  scale_y_sqrt(limits=c(0,m),label=comma)+
+  scale_fill_colorblind(name=NULL)+
+  scale_color_colorblind(name=NULL)+
+  facet_grid(sex~acat)+coord_fixed()+# + xlim(0,m)+ylim(0,m)+
+  ylab('Estimated tuberculosis incidence 2019 (sqrt scale)')+
+  xlab('Notified tuberculosis 2019 (sqrt scale)')+
+  theme_light()+theme(legend.position = 'top')
+plt
+
+
+ggsave(plt,file=here('plots/IvNsex.pdf'),h=14,w=14)
+ggsave(plt,file=here('plots/IvNsex.png'),h=14,w=14)
+
+
+## barplot version
+smys2[,fmeth:=paste0(method,', ',mixing)]
+cnys <- unique(smys2$newcountry)
+cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
+smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
+dog <- position_dodge()
+
+
+plt <- ggplot(smys2,aes(acat,y=inc.num.mid,fill=fmeth))+
+  geom_bar(stat='identity',position = dog)+
+  geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
+  facet_nested_wrap(~newcountry+sex,scales='free_y')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019')+
+  theme(legend.position = 'top',legend.direction = 'horizontal')+
+  theme(strip.background = element_blank(),
+        ggh4x.facet.nestline = element_line(colour = "grey"))
+plt
+
+ggsave(plt,file=here('plots/Ibarsex.pdf'),h=12,w=12)
+ggsave(plt,file=here('plots/Ibarsex.png'),h=12,w=12)
+
+
+## per capita version of Ibar
+popss <- unique(IRR[,.(iso3,sex,acat,pop)])
+popsst <- popss[,.(pop=sum(pop)),by=.(sex,acat)]
+popsst[,iso3:='TOTAL']
+popss <- rbind(popss,popsst)
+smys3 <- merge(smys2,popss,by=c('iso3','sex','acat'),all.x=TRUE)
+smys3[,ymx:=pmax(1e5*inc.num.mid/pop,1e5*notified/pop,na.rm=TRUE),by=.(iso3,acat)] #y-max
+## popss[iso3=='TOTAL']
+## smys3[iso3=='TOTAL']
+## smys3[iso3=='AGO']
+
+
+plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+  geom_bar(stat='identity',position = dog)+
+  geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+  geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+  facet_nested_wrap(~newcountry+sex,scales='free')+
+  scale_fill_colorblind(name=NULL)+
+  scale_y_continuous(label = comma)+
+  xlab('Age group (years)')+
+  ylab('Tuberculosis incidence 2019 (per 100,000)')+
+  theme(legend.position = 'top',legend.direction = 'horizontal')+
+  theme(strip.background = element_blank(),
+        ggh4x.facet.nestline = element_line(colour = "grey"))
+plt
+
+
+## ## BUG:
+## ## make scales
+## ypsns <- list()
+## for(iso in unique(smys3$iso3)){
+##   ylm <- smys3[iso3==iso,ymx][1]
+##   ncy <- smys3[iso3==iso,newcountry][1]
+##   ypsns[[iso]] <- as.formula(paste0("newcountry == '",ncy,
+##                                     "' ~  scale_y_continuous(label = comma,limits = c(0,",ylm,") )"))
+## }
+
+## plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+##   geom_bar(stat='identity',position = dog)+
+##   geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+##   geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+##   facet_nested_wrap(~newcountry+sex,scales='free')+
+##   facetted_pos_scales(y = ypsns)+
+##   scale_fill_colorblind(name=NULL)+
+##   ## scale_y_continuous(label = comma)+
+##   xlab('Age group (years)')+
+##   ylab('Tuberculosis incidence 2019 (per 100,000)')+
+##   theme(legend.position = 'top',legend.direction = 'horizontal')+
+##   theme(strip.background = element_blank(),
+##         ggh4x.facet.nestline = element_line(colour = "grey"))
+## plt
+
+ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
+ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
+
+
+## --- MF plot -------
+MF <- rnr[,.(inc0,inc),
+          by=.(iso3,sex,acat,mixing,replicate)]
+MF <- melt(MF,id=c('iso3','sex','acat','mixing','replicate'))
+MF[,variable:=ifelse(grepl(0,variable),'no risk factors','with risk factors')]
+MF <- dcast(data=MF,iso3+mixing+variable+replicate+acat ~ sex)
+MF[,mf:=M/F]
+MF <- MF[,.(mf=mean(mf),mf.lo=lo(mf),mf.hi=hi(mf)),by=.(iso3,mixing,variable,acat)]
+MF <- MF[variable!='no risk factors']
+TXT <- dcast(data=MF,iso3 ~ mixing + variable + acat,value.var='mf')
+TXT[,txtr:=`assortative_with risk factors_15-19`/`assortative_with risk factors_10-14`]
+TXT[,txt:=round(txtr,2)]
+TXT[,c('mf','mf.lo','mf.hi'):=1.5]
+TXT[,c('sex','acat','mixing','variable'):=NA]
+tmp <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='random']
+der <- order(tmp$mf)
+lvls <- unique(tmp[der,iso3])
+MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
+MF[,age:=acat]
+TXT[,age:=acat]
+
+pd <- position_dodge(0.25)
+GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,
+                     col=age,shape=mixing))+
+  geom_pointrange(position=pd,shape=1)+
+  coord_flip(clip='off')+
+  theme_classic()+theme(legend.position='top',)+ggpubr::grids()+
+  xlab('Country')+ylab('M:F ratio of risk ratios')+
+  geom_hline(yintercept = 1,col='grey',lty=2) +
+  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
+  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
+GPP
+
+ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
 
 
 ## percentages
@@ -535,9 +764,10 @@ ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
 
 ggsave(file=here('plots/ratio_age_scatter.png'),h=5,w=5)
 
-
+popl <- unique(IRR[,.(iso3,sex,acat,pop)])
+popl <- popl[,.(pop=sum(pop)),by=.(iso3,acat)]
 nrts <- merge(rats[method=='with risk factors, assortative',.(iso3,acat,incidence)],
-              unique(IRR[,.(iso3,acat,pop)]),by=c('iso3','acat'))
+              popl,by=c('iso3','acat'))
 
 nrts[,pci:=1e5*incidence/pop]
 

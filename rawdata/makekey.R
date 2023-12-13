@@ -85,4 +85,13 @@ ckey <- data.table(iso3=isoz,ihme=ihme,UN=UN)
 ## ckey[,.(iso3,ihme)]
 ## ckey[,.(iso3,UN)]
 
+ckey[,newcountry:=UN]
+ckey[UN=="Democratic People's Republic of Korea",newcountry:="DPR Korea"]
+ckey[UN=="Democratic Republic of the Congo",newcountry:="DR Congo"]
+ckey[UN=="United Republic of Tanzania",newcountry:="UR Tanzania"]
+ckey[UN=="Papua New Guinea",newcountry:="PNG"]
+
+
+
+
 save(ckey,file=here('rawdata/ckey.Rdata'))
