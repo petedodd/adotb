@@ -1,4 +1,3 @@
-## TODO more reps?
 ## using previous outputs to compute incidence
 library(here)
 library(data.table)
@@ -11,6 +10,8 @@ library(HEdtree)
 library(ggarchery)
 library(ungeviz)
 library(ggh4x)
+library(ggpubr)
+library(grid)
 
 ## utility functions
 ssum <- function(x) sqrt(sum(x^2))
@@ -83,10 +84,6 @@ load(file=gh('LTBI/tmpdata/rnra.full.Rdata'))
 rnra[,acat:=ifelse(age>14,'15-19','10-14')]
 table(rnra$acat) #OK
 rnra$acat <- factor(rnra$acat,levels=c('10-14','15-19'),ordered = TRUE)
-
-
-## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
-## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
 rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
 rnra <- rnra[order(mixing,replicate,iso3,age)]
 
@@ -96,15 +93,9 @@ rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
 rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
 rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
 
-
-## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
-## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
-
 tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
 rnra[,prog.slow:=tmp]
-## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
-
-## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
+## incidence
 rnra[,inc0.a:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
 rnra[,inc0.m:=(m.P1) * prog.recent1 + (m.P2-m.P1) * prog.recent2 + (m.P-m.P2) * prog.slow] #baseline incidence, males
 rnra[,inc0.f:=(f.P1) * prog.recent1 + (f.P2-f.P1) * prog.recent2 + (f.P-f.P2) * prog.slow] #baseline incidence, females
@@ -114,10 +105,6 @@ rnra[,inc0.f:=(f.P1) * prog.recent1 + (f.P2-f.P1) * prog.recent2 + (f.P-f.P2) * 
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
 load(fn)
-
-## ## aggregate over ages
-## rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0)),
-##                by=.(iso3,acat,replicate,mixing)] #mean over ages
 
 ## relative risk data
 load(gh('PAF/data/IRR.Rdata'))
@@ -129,9 +116,6 @@ DRA[,sex:=ifelse(Sex=='Boys','M','F')]
 DRA <- DRA[age>9]
 
 ## include sex in rnra
-## nn <- nrow(rnra)
-## rnra <- rnra[rep(1:nn,2)]
-## rnra[,sex:=c(rep('F',nn),rep('M',nn))]
 rnra <- melt(rnra[,.(acat,iso3,mixing,replicate,age,
                      m.P,m.P1,m.P2,m.inc0=inc0.m,
                      f.P,f.P1,f.P2,f.inc0=inc0.f)],
@@ -385,8 +369,6 @@ cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
 smy2$newcountry <- factor(smy2$newcountry,levels=cnys,ordered = TRUE)
 dog <- position_dodge()
 
-## ymax=inc.num.hi,ymin=inc.num.lo
-## geom_errorbar(width=0,col=2,position = dog)+ #NOTE tricky to dodge and unhelpful global
 plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth))+
   geom_bar(stat='identity',position = dog)+
   geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
@@ -445,8 +427,6 @@ smys2[,variable:=gsub('0','',variable)]
 smys2 <- dcast(smys2,iso3+sex+acat+notified+method + mixing ~ variable,value.var = 'value')
 smys2 <- merge(smys2,ckey,by = 'iso3',all.x=TRUE)
 smys2[iso3=='TOTAL',newcountry:='TOTAL']
-## smys2[iso3=='TOTAL']
-## smys2[iso3=='AGO']
 
 ## plot
 m <- 3.1e5
@@ -484,36 +464,36 @@ smys2[,fmeth:=paste0(method,', ',mixing)]
 cnys <- unique(smys2$newcountry)
 cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
 smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
-
 smys2[,ymx:=pmax(inc.num.mid,notified,na.rm=TRUE),by=.(iso3,acat)] #y-max
-## BUG:
-## make scales
-ypsns <- list()
-for(iso in unique(smys2$iso3)){
-  ylm <- smys2[iso3==iso,ymx][1]
-  ncy <- smys2[iso3==iso,newcountry][1]
-  ypsns[[iso]] <- as.formula(paste0("newcountry == '",ncy,
-                                    "' ~  scale_y_continuous(label = comma,limits = c(0,",ylm,") )"))
-}
+
 
 dog <- position_dodge()
-plt <- ggplot(smys2,aes(acat,y=inc.num.mid,fill=fmeth))+
-  geom_bar(stat='identity',position = dog)+
-  geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
-  geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
-  facet_nested_wrap(~newcountry+sex,scales='free_y')+
-  facetted_pos_scales(y = ypsns)+
-  ## scale_y_continuous(label = comma)+
-  scale_fill_colorblind(name=NULL)+
-  xlab('Age group (years)')+
-  ylab('Tuberculosis incidence 2019')+
-  theme(legend.position = 'top',legend.direction = 'horizontal')+
-  theme(strip.background = element_blank(),
-        ggh4x.facet.nestline = element_line(colour = "grey"))
-plt
+plist <- list()
+for(cn in cnys){
+  plist[[cn]] <- ggplot(smys2[newcountry==cn],aes(acat,y=inc.num.mid,fill=fmeth))+
+    geom_bar(stat='identity',position = dog)+
+    geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
+    geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
+    facet_nested_wrap(~newcountry+sex)+
+    scale_y_continuous(label = comma)+
+    scale_fill_colorblind(name=NULL)+
+    xlab('')+
+    ylab('')+
+    theme(legend.position = 'top',legend.direction = 'horizontal')+
+    theme(strip.background = element_blank(),
+          ggh4x.facet.nestline = element_line(colour = "grey"),
+          plot.margin = unit(c(0,0.0,0,0), 'lines'))
+}
 
-ggsave(plt,file=here('plots/Ibarsex.pdf'),h=12,w=12)
-ggsave(plt,file=here('plots/Ibarsex.png'),h=12,w=12)
+GA <- ggarrange(plotlist=plist,nrow=8,ncol=4,common.legend=TRUE)
+GA <- annotate_figure(GA,
+                      left = textGrob("Tuberculosis incidence 2019",
+                                      rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+                      bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
+
+ggsave(GA,file=here('plots/Ibarsex.pdf'),h=12,w=12)
+ggsave(GA,file=here('plots/Ibarsex.png'),h=12,w=12)
+
 
 
 ## per capita version of Ibar
@@ -523,50 +503,35 @@ popsst[,iso3:='TOTAL']
 popss <- rbind(popss,popsst)
 smys3 <- merge(smys2,popss,by=c('iso3','sex','acat'),all.x=TRUE)
 smys3[,ymx:=pmax(1e5*inc.num.mid/pop,1e5*notified/pop,na.rm=TRUE),by=.(iso3,acat)] #y-max
-## popss[iso3=='TOTAL']
-## smys3[iso3=='TOTAL']
-## smys3[iso3=='AGO']
 
 
-plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
-  geom_bar(stat='identity',position = dog)+
-  geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
-  geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
-  facet_nested_wrap(~newcountry+sex,scales='free')+
-  scale_fill_colorblind(name=NULL)+
-  scale_y_continuous(label = comma)+
-  xlab('Age group (years)')+
-  ylab('Tuberculosis incidence 2019 (per 100,000)')+
-  theme(legend.position = 'top',legend.direction = 'horizontal')+
-  theme(strip.background = element_blank(),
-        ggh4x.facet.nestline = element_line(colour = "grey"))
-plt
+dog <- position_dodge()
+plist <- list()
+for(cn in cnys){
+  plist[[cn]] <- ggplot(smys3[newcountry==cn],
+                        aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
+    geom_bar(stat='identity',position = dog)+
+    geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
+    geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
+    facet_nested_wrap(~newcountry+sex)+
+    scale_fill_colorblind(name=NULL)+
+    scale_y_continuous(label = comma)+
+    xlab('')+
+    ylab('')+
+    theme(legend.position = 'top',legend.direction = 'horizontal')+
+    theme(strip.background = element_blank(),
+          ggh4x.facet.nestline = element_line(colour = "grey"),
+          plot.margin = unit(c(0,0.0,0,0), 'lines'))
+}
 
+## check
+plist[['Brazil']]
 
-## ## BUG:
-## ## make scales
-## ypsns <- list()
-## for(iso in unique(smys3$iso3)){
-##   ylm <- smys3[iso3==iso,ymx][1]
-##   ncy <- smys3[iso3==iso,newcountry][1]
-##   ypsns[[iso]] <- as.formula(paste0("newcountry == '",ncy,
-##                                     "' ~  scale_y_continuous(label = comma,limits = c(0,",ylm,") )"))
-## }
-
-## plt <- ggplot(smys3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
-##   geom_bar(stat='identity',position = dog)+
-##   geom_point(aes(acat,1e5*notified/pop),col=2,show.legend = FALSE)+
-##   geom_hpline(aes(y = 1e5*notified/pop, x = acat),col=2,width=1)+
-##   facet_nested_wrap(~newcountry+sex,scales='free')+
-##   facetted_pos_scales(y = ypsns)+
-##   scale_fill_colorblind(name=NULL)+
-##   ## scale_y_continuous(label = comma)+
-##   xlab('Age group (years)')+
-##   ylab('Tuberculosis incidence 2019 (per 100,000)')+
-##   theme(legend.position = 'top',legend.direction = 'horizontal')+
-##   theme(strip.background = element_blank(),
-##         ggh4x.facet.nestline = element_line(colour = "grey"))
-## plt
+GA <- ggarrange(plotlist=plist,nrow=8,ncol=4,common.legend=TRUE)
+GA <- annotate_figure(GA,
+                      left = textGrob("Tuberculosis incidence 2019 (per 100,000)",
+                                      rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+                      bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
 
 ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
 ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
