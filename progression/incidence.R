@@ -76,16 +76,27 @@ eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
 1e2*mean(rlnorm(1e4,meanlog=-6.89,sdlog=0.58)) #~0.1%/y mean
 
 ## load LTBI:
-load(file=gh('LTBI/data/rnra.Rdata'))
+## load(file=gh('LTBI/data/rnra.Rdata'))
+load(file=gh('LTBI/tmpdata/rnra.full.Rdata'))
+
+## add in acats
+rnra[,acat:=ifelse(age>14,'15-19','10-14')]
+table(rnra$acat) #OK
+rnra$acat <- factor(rnra$acat,levels=c('10-14','15-19'),ordered = TRUE)
+
+
 ## rnra <- merge(rnra,pzz,by='acat',all.x=TRUE)
 ## rnra[,prog.recent:=rbeta(nrow(rnra),shape1=A,shape2=B)]
 rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
 rnra <- rnra[order(mixing,replicate,iso3,age)]
+
 ## ensure paired over mixing:
 rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
 rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
 rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
 rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
+
+
 ## rnra[,prog.recent2:=rlnorm(nrow(rnra),meanlog = m2,sdlog = s2)]
 ## rnra[,prog.recent2:=rbeta(nrow(rnra),shape1=A2,shape2=B2)]
 
@@ -94,7 +105,10 @@ rnra[,prog.slow:=tmp]
 ## rnra[,prog.slow:=rlnorm(nrow(rnra),meanlog=eps$meanlog,sdlog=eps$sdlog)]
 
 ## rnra[,inc0:=(P1) * prog.recent + (P-P1) * prog.slow] #baseline incidence
-rnra[,inc0:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
+rnra[,inc0.a:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
+rnra[,inc0.m:=(m.P1) * prog.recent1 + (m.P2-m.P1) * prog.recent2 + (m.P-m.P2) * prog.slow] #baseline incidence, males
+rnra[,inc0.f:=(f.P1) * prog.recent1 + (f.P2-f.P1) * prog.recent2 + (f.P-f.P2) * prog.slow] #baseline incidence, females
+
 
 
 ## notification data for comparison
@@ -115,9 +129,21 @@ DRA[,sex:=ifelse(Sex=='Boys','M','F')]
 DRA <- DRA[age>9]
 
 ## include sex in rnra
-nn <- nrow(rnra)
-rnra <- rnra[rep(1:nn,2)]
-rnra[,sex:=c(rep('F',nn),rep('M',nn))]
+## nn <- nrow(rnra)
+## rnra <- rnra[rep(1:nn,2)]
+## rnra[,sex:=c(rep('F',nn),rep('M',nn))]
+rnra <- melt(rnra[,.(acat,iso3,mixing,replicate,age,
+                     m.P,m.P1,m.P2,m.inc0=inc0.m,
+                     f.P,f.P1,f.P2,f.inc0=inc0.f)],
+             id=c('acat','iso3','mixing','replicate','age'))
+rnra[,c('sex','variable'):=tstrsplit(variable,split='\\.')]
+rnra[,sex:=toupper(sex)]
+rnra <- dcast(data=rnra,acat+iso3+mixing+replicate+age+sex ~ variable,value.var='value')
+
+## checks for pattern: OK
+rnra[,sum(inc0),by=.(sex,mixing)]
+rnra[,sum(inc0),by=.(sex,mixing,acat)]
+
 ## merge in
 rnra <- merge(rnra,DRA[,.(iso3,sex,age,RR,RR.sd)],
               by=c('iso3','sex','age'))
@@ -303,7 +329,7 @@ setcolorder(out.inc,c("iso3","mixing","RF",
                       "inc.num.fmt_10-14","notified_10-14","CDR_10-14",
                       "inc.num.fmt_15-19","notified_15-19","CDR_15-19"   ))
 
-fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
+fwrite(out.inc[!is.na(`notified_10-14`)],file=gh('outdata/out.inc.csv'))
 
 
 
@@ -344,7 +370,7 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
   ylab('Estimated tuberculosis incidence 2019 (sqrt scale)')+
   xlab('Notified tuberculosis 2019 (sqrt scale)')+
   theme_light()+theme(legend.position = 'top')
-## plt
+plt
 
 
 ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
@@ -423,7 +449,7 @@ smys2[iso3=='TOTAL',newcountry:='TOTAL']
 ## smys2[iso3=='AGO']
 
 ## plot
-m <- 3e5
+m <- 3.1e5
 plt <- ggplot(smys2[method=='with risk factors' & mixing=='assortative'],
               aes(x=notified,y=inc.num.mid,
                   ymin=inc.num.lo,ymax=inc.num.hi,
@@ -458,16 +484,27 @@ smys2[,fmeth:=paste0(method,', ',mixing)]
 cnys <- unique(smys2$newcountry)
 cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
 smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
+
+smys2[,ymx:=pmax(inc.num.mid,notified,na.rm=TRUE),by=.(iso3,acat)] #y-max
+## BUG:
+## make scales
+ypsns <- list()
+for(iso in unique(smys2$iso3)){
+  ylm <- smys2[iso3==iso,ymx][1]
+  ncy <- smys2[iso3==iso,newcountry][1]
+  ypsns[[iso]] <- as.formula(paste0("newcountry == '",ncy,
+                                    "' ~  scale_y_continuous(label = comma,limits = c(0,",ylm,") )"))
+}
+
 dog <- position_dodge()
-
-
 plt <- ggplot(smys2,aes(acat,y=inc.num.mid,fill=fmeth))+
   geom_bar(stat='identity',position = dog)+
   geom_point(aes(acat,notified),col=2,show.legend = FALSE)+
   geom_hpline(aes(y = notified, x = acat),col=2,width=1)+
   facet_nested_wrap(~newcountry+sex,scales='free_y')+
+  facetted_pos_scales(y = ypsns)+
+  ## scale_y_continuous(label = comma)+
   scale_fill_colorblind(name=NULL)+
-  scale_y_continuous(label = comma)+
   xlab('Age group (years)')+
   ylab('Tuberculosis incidence 2019')+
   theme(legend.position = 'top',legend.direction = 'horizontal')+
