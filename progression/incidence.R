@@ -101,7 +101,6 @@ rnra[,inc0.m:=(m.P1) * prog.recent1 + (m.P2-m.P1) * prog.recent2 + (m.P-m.P2) * 
 rnra[,inc0.f:=(f.P1) * prog.recent1 + (f.P2-f.P1) * prog.recent2 + (f.P-f.P2) * prog.slow] #baseline incidence, females
 
 
-
 ## notification data for comparison
 fn <- gh('progression/data/NR.Rdata')
 load(fn)
@@ -545,32 +544,47 @@ MF[,variable:=ifelse(grepl(0,variable),'no risk factors','with risk factors')]
 MF <- dcast(data=MF,iso3+mixing+variable+replicate+acat ~ sex)
 MF[,mf:=M/F]
 MF <- MF[,.(mf=mean(mf),mf.lo=lo(mf),mf.hi=hi(mf)),by=.(iso3,mixing,variable,acat)]
-MF <- MF[variable!='no risk factors']
-TXT <- dcast(data=MF,iso3 ~ mixing + variable + acat,value.var='mf')
-TXT[,txtr:=`assortative_with risk factors_15-19`/`assortative_with risk factors_10-14`]
-TXT[,txt:=round(txtr,2)]
-TXT[,c('mf','mf.lo','mf.hi'):=1.5]
-TXT[,c('sex','acat','mixing','variable'):=NA]
+## MF <- MF[variable!='no risk factors']
 tmp <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='random']
 der <- order(tmp$mf)
 lvls <- unique(tmp[der,iso3])
 MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
 MF[,age:=acat]
+MF$mixing <- factor(MF$mixing,levels=rev(c('assortative','random')),ordered=TRUE)
+## data for text
+TXT <- dcast(data=MF,iso3 ~ mixing + variable + acat,value.var='mf')
+TXT[,txtr:=`assortative_with risk factors_15-19`/`assortative_with risk factors_10-14`]
+TXT[,txt:=round(txtr,2)]
+TXT[,c('mf','mf.lo','mf.hi'):=1.7]
+TXT[,variable:='with risk factors']
+TXT[,sex:='M']
+TXT[,acat:='10-14']
+TXT[,mixing:='assortative']
 TXT[,age:=acat]
 
-pd <- position_dodge(0.25)
-GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,
+## keep only relevant data
+tmp <- MF[!(acat=='10-14' & mixing=='assortative')]
+tmp <- tmp[!(acat=='15-19' & mixing=='assortative' & variable=='no risk factors')]
+tmp <- tmp[!(mixing=='random' & variable=='no risk factors')]
+
+## plot
+pd <- position_dodge(0.5)
+GPP <- ggplot(tmp,
+              aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,
                      col=age,shape=mixing))+
-  geom_pointrange(position=pd,shape=1)+
+  geom_pointrange(position=pd)+
+  scale_shape(solid=FALSE)+
   coord_flip(clip='off')+
   theme_classic()+theme(legend.position='top',)+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios')+
   geom_hline(yintercept = 1,col='grey',lty=2) +
-  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
-  annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
+  geom_text(data=TXT,aes(label=txt),show.legend=FALSE,col='black')+
+  annotate('text',y=1.7,x=31.5,label='Older/Younger\nMF ratios',size=3)+
+  ylim(c(0.85,1.72))
 GPP
 
 ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
+ggsave(GPP,file=here('plots/MFcountryFULL.pdf'),h=7,w=7)
 
 
 ## percentages
