@@ -171,7 +171,6 @@ rnrss <- rnrss[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 inc.num.hi=hi(inc.num),inc.num.lo=lo(inc.num)
                 ),
              by=.(iso3,acat,mixing)] #mean/hi/lo
-
 rnrss2 <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
                 LTBI.mid=mean(LTBI),
                 inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
@@ -206,8 +205,7 @@ rnrtot <- rnrtot[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
                     P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
                     LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
                  by=.(acat,mixing)]
-
-## by sex
+## by sex and age
 rnrtot2 <- rnr[,.(P=weighted.mean(P,value),
                  P1=weighted.mean(P1,value),
                  P2=weighted.mean(P2,value),
@@ -233,7 +231,7 @@ rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
 rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
 rnrtot[,iso3:='TOTAL']
 
-## by sex
+## by sex and age
 rnrtoti2 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,acat,mixing,replicate)]
 rnrtoti2 <- rnrtoti2[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
                       inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
@@ -241,6 +239,14 @@ rnrtoti2 <- rnrtoti2[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
                    by=.(sex,acat,mixing)]
 rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('sex','acat','mixing'))
 rnrtot2[,iso3:='TOTAL']
+
+## by sex only
+rnrtoti3 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,mixing,replicate)]
+rnrtoti3 <- rnrtoti3[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
+                        inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
+                        inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
+                     by=.(sex,mixing)]
+
 
 ## for getting levels correct
 lvls <- rnr[,unique(iso3)]
@@ -277,10 +283,12 @@ fwrite(smy,file=gh('outdata/smy.csv'))
 ## CDR stats for text
 cdry <- tmp[mixing=='assortative' & acat=='10-14']
 cdry <- cdry[order(CDR)]
+
 fwrite(cdry,file=gh('outdata/cdry.csv'))
 
 cdro <- tmp[mixing=='assortative' & acat=='15-19']
 cdro <- cdro[order(CDR)]
+
 fwrite(cdro,file=gh('outdata/cdro.csv'))
 
 
@@ -601,6 +609,7 @@ PC[,pc.hi:=pc+1.96*pc.sd]
 PC[,percentage:=fmt1(pc,pc.lo,pc.hi)]
 youngpc <- PC[acat=='10-14'][order(pc,decreasing=TRUE),.(iso3,percentage)]
 oldpc <- PC[acat=='15-19'][order(pc,decreasing=TRUE),.(iso3,percentage)]
+
 fwrite(youngpc,file=gh('outdata/PC_ranked_1014.csv'))
 fwrite(oldpc,file=gh('outdata/PC_ranked_1519.csv'))
 
@@ -684,6 +693,34 @@ fn <- gh('outdata/cftab.csv')
 fwrite(TCFe,file=fn)
 
 print(TCFe)
+
+## version with sex 
+TWS <- copy(rnrtoti2)
+tmp <- copy(rnrtoti3)
+tmp[,acat:='10-19']
+TWS <- rbind(TWS,tmp,use.names=TRUE)
+TWS <- melt(TWS,id=c('sex','mixing','acat'))
+TWS[,meth:='with risk factors']
+TWS[grepl(0,variable),meth:='without risk factors']
+TWS[,variable:=gsub('0','',variable)]
+TWS[,fmeth:=paste0(meth,', ',mixing)]
+TWS <- dcast(data=TWS,sex+fmeth+acat ~ variable,value.var = 'value')
+TWS[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+TWS <- melt(TWS[,.(sex,acat,fmeth,txt)],id=c('sex','acat','fmeth'))
+TWS <- dcast(TWS,acat+sex~fmeth,value.var = 'value')
+
+TWS$acat <- factor(TWS$acat,levels=acata,ordered=TRUE)
+setkey(TWS,acat)
+
+
+setcolorder(TWS,c('acat','sex',
+                   'with risk factors, assortative','with risk factors, random',
+                   'without risk factors, assortative','without risk factors, random'))
+
+TWS
+
+fn <- gh('outdata/cfWS.csv')
+fwrite(TWS,file=fn)
 
 
 ## country-level comparisons
