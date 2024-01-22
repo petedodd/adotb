@@ -15,6 +15,7 @@ fmt <- function(x,y,z) paste0(rds(x)," (",rds(y)," to ",rds(z),")")
 fmtpc <- function(x,y,z) paste0(rds(1e2*x)," (",rds(1e2*y)," to ",rds(1e2*z),")")
 gh <- function(x) glue(here(x))
 ssum <- function(x) sqrt(sum(x^2))
+fts <- function(x,n) format(round(x, n), nsmall = n)
 
 load(here('rawdata/ckey.Rdata'))
 
@@ -81,6 +82,24 @@ DRA[,any(RR.lo>RR)]
 ## save
 save(DRA,file=here('PAF/data/DRAgamma.Rdata'))
 
+## summary output for appendix
+load(file=here('PAF/data/DRAgamma.Rdata'))
+
+DRAS <- DRA[age>=10,
+           .(RR=mean(RR),RR.sd=ssum(RR.sd)/sqrt(5)),
+           by=.(country=Country,sex=ifelse(Sex=='Boys','males','females'),
+                                      acat=ifelse(age<15,'10-14','15-19'))]
+
+DRAS[,RR.neat:=paste0(fts(RR,2)," (",
+                      fts(RR-1.96*RR.sd,2)," to ",
+                      fts(RR+1.96*RR.sd,2),")")]
+
+DRAS <- dcast(data=DRAS,country ~ sex + acat,value.var='RR.neat')
+DRAS <- DRAS[!country %in% c('Zimbabwe','Cambodia','Russian Federation')] #only 30 HBC of interest
+
+fwrite(DRAS,file=here('outdata/thinness.RRs.csv'))
+
+## more inspection
 CFA <- merge(DRA[age>=10,.(RRn=mean(RR)),by=Country],
              DRA[age>=10 & age <15,.(RRy=mean(RR)),by=Country],by='Country')
 
