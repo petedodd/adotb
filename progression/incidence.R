@@ -540,8 +540,8 @@ GA <- annotate_figure(GA,
                                       rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
                       bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
 
-ggsave(plt,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
-ggsave(plt,file=here('plots/IbarPCsex.png'),h=12,w=12)
+ggsave(GA,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
+ggsave(GA,file=here('plots/IbarPCsex.png'),h=12,w=12)
 
 
 ## --- MF plot -------
