@@ -4,6 +4,17 @@ library(glue)
 library(googlesheets4)
 
 
+## reformat & restruct smy
+S <- fread(here('outdata/smy.csv'))
+S <- melt(S[,.(iso3,acat,mixing,inc.num0.fmt,inc.num.fmt)],id=c('iso3','acat','mixing'))
+S[,variable:=ifelse(grepl('0',variable),'Without risk factors','With risk factors')]
+S <- dcast(S,iso3+mixing+variable~acat,value.var='value')
+cnz <- S[,unique(iso3)]
+cnz <- c(sort(cnz[!cnz=='TOTAL']),'TOTAL')
+setkey(S,iso3)
+S <- S[cnz]
+fwrite(S,file=here('outdata/smy.inc.csv'))
+
 ## NOTE authors only
 ## create an ID to access the googlesheets results sheet
 yourl <- "https://docs.google.com/spreadsheets/d/1IyqshINvFHWy1Gqk5NV__W2KKNX-TJPnYpbq6KJSu0o/edit#gid=0"
@@ -21,6 +32,7 @@ upload.to.sheets <- function(basename,filename,sheetid
 
 ## upload relevant table data
 upload.to.sheets(here('outdata/'),'cftab',shid) #first will need to re-authenticate
+upload.to.sheets(here('outdata/'),'smy.inc',shid) #first will need to re-authenticate
 
 ## rest can be run as block
 flz1 <- c(
@@ -42,6 +54,7 @@ flz1 <- c(
   'PC_ranked_1519.csv',
   'RRstats.csv',
   'smy.csv',
+  'smy.inc.csv',
   'thinness.RRs.csv'
 )
 
