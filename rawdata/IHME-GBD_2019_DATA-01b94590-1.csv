@@ -1,0 +1,361 @@
+measure_id,measure_name,location_id,location_name,sex_id,sex_name,age_id,age_name,cause_id,cause_name,metric_id,metric_name,year,val,upper,lower
+6,Incidence,15,Myanmar,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,100.48298311675637,227.74544431087517,30.823024210617483
+6,Incidence,15,Myanmar,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,114.09598017698339,268.6382219859612,34.080138674957425
+6,Incidence,15,Myanmar,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,238.0619420970006,548.5938515297826,77.152988753137
+6,Incidence,15,Myanmar,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,248.530297328159,596.3206874124156,81.37171255617271
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,11.982394024734146,29.947735756348024,3.494397321860238
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,11.657832315254598,28.946159209687927,3.473337108238551
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,52.85082376144901,131.21009411092626,15.964682652938441
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,39.816893816261725,100.11363554006755,11.600286119220021
+6,Incidence,26,Papua New Guinea,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,7.468017399278011,17.29060935895545,2.2712020165814666
+6,Incidence,26,Papua New Guinea,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,19.050515238182467,44.43940102320846,5.828760543122877
+6,Incidence,26,Papua New Guinea,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,22.44952046826027,54.07628404652409,7.472552030891497
+6,Incidence,26,Papua New Guinea,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,36.63948159279381,88.15233679372602,12.331358552875432
+6,Incidence,26,Papua New Guinea,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.6809774974327353,1.5753788274753393,0.2068259303765856
+6,Incidence,26,Papua New Guinea,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.7369995407474275,4.051968201091092,0.528996755174177
+6,Incidence,26,Papua New Guinea,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.046947594485315,4.932894144716886,0.6816179217367243
+6,Incidence,26,Papua New Guinea,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.340844062714933,8.058137769680094,1.125123955554328
+6,Incidence,15,Myanmar,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1619.027896558371,2518.513361742533,903.2270606584357
+6,Incidence,15,Myanmar,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1833.7450118968713,2830.6449232443047,1057.1403276942583
+6,Incidence,15,Myanmar,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,3797.0463914948677,5489.329698683528,2378.9266206298607
+6,Incidence,15,Myanmar,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,3967.8621590743214,5813.940638903928,2520.9750420268706
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,262.6070676020243,421.82176813059584,150.5294669607192
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,254.78950688123666,397.9759556469007,144.10662555326923
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1158.224191944554,1674.3298836469364,742.9757236747663
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,870.012194654973,1253.85076951224,549.0774787746809
+6,Incidence,161,Bangladesh,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.0912734900369605,7.6912710068038095,0.7016338427326476
+6,Incidence,161,Bangladesh,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,4.841877923147512,12.389747498531422,1.1002634463369751
+6,Incidence,161,Bangladesh,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,7.050529634640263,17.31884205449003,1.6643841803567574
+6,Incidence,161,Bangladesh,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,9.846282340294255,25.350534696445216,2.2890932783080244
+6,Incidence,38,Mongolia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2.7063764073266197,7.529949364847548,0.5089935648177603
+6,Incidence,38,Mongolia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,4.335155077675317,12.904865384494704,0.7852194432250976
+6,Incidence,38,Mongolia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,8.433299055549307,22.347404901962253,1.6176061625665064
+6,Incidence,38,Mongolia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,8.127992854499322,22.129863667057055,1.511455509350856
+6,Incidence,15,Myanmar,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,9.161628755455325,20.77758645753224,2.8049646955347742
+6,Incidence,15,Myanmar,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,10.404030693768712,24.491123038717358,3.1115036887032907
+6,Incidence,15,Myanmar,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,21.706352615174254,50.120288561291765,7.021182502787889
+6,Incidence,15,Myanmar,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,22.661798670853553,54.349109537327834,7.417726236065745
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.0924107800980578,2.731813709200363,0.31890245737428247
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.0630314362234077,2.6358578613204315,0.31663017837533747
+6,Incidence,7,Democratic People's Republic of Korea,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,4.819165148963238,11.937369435185532,1.449832758391046
+6,Incidence,7,Democratic People's Republic of Korea,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.630156649283138,9.124790818344282,1.0539675878504924
+6,Incidence,161,Bangladesh,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,126.12938584337296,314.5712540748251,28.663969503237098
+6,Incidence,161,Bangladesh,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,197.54652054892918,504.84373308845187,45.007104500100006
+6,Incidence,161,Bangladesh,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,287.64530966808553,706.0687556224552,68.05297050327592
+6,Incidence,161,Bangladesh,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,401.7354544683387,1035.369623466564,93.47279413110024
+6,Incidence,20,Viet Nam,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,7.388374666064141,19.327036227106245,1.9500009797071787
+6,Incidence,20,Viet Nam,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,5.281742448894454,14.396060684647916,1.3103377445291817
+6,Incidence,20,Viet Nam,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,16.976157404013886,44.10005178645722,4.686010226236618
+6,Incidence,20,Viet Nam,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,11.957810459744104,30.3730099022572,3.3445322298762825
+6,Incidence,20,Viet Nam,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,81.0346948603399,212.0398347566841,21.376957045633947
+6,Incidence,20,Viet Nam,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,57.92524629620407,157.88050515602615,14.360412164586883
+6,Incidence,20,Viet Nam,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,186.1796735402552,483.38204765659555,51.364712944745904
+6,Incidence,20,Viet Nam,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,131.14534847119586,333.2479122796316,36.71687993475359
+6,Incidence,135,Brazil,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,76.53587814163778,240.42376330298066,13.964341905512432
+6,Incidence,135,Brazil,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,54.92430506105305,168.3416885004964,9.523380832051656
+6,Incidence,20,Viet Nam,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1932.5917051305687,2830.3472038302134,1199.5781482162324
+6,Incidence,20,Viet Nam,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1382.0939036386662,2053.0254310921873,849.189337793922
+6,Incidence,20,Viet Nam,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,4513.394829439621,6217.591745292138,2935.581006772752
+6,Incidence,20,Viet Nam,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,3145.476724335232,4264.283512727803,2064.5283353112063
+6,Incidence,6,China,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,3684.4605951055746,5434.801703478516,2246.9299086367473
+6,Incidence,6,China,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,3373.8833031075105,4888.04347327677,2005.4717665623537
+6,Incidence,6,China,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,16724.628375982444,23675.126006645394,11077.196492686167
+6,Incidence,6,China,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,12329.265392203446,17797.744781770925,8147.373574052001
+6,Incidence,38,Mongolia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,24.435214860768667,37.56060354525908,14.414193975923357
+6,Incidence,38,Mongolia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,39.04950373233343,60.419186994232255,23.29682594712555
+6,Incidence,38,Mongolia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,76.68747853482932,120.19315976743344,43.15635418780853
+6,Incidence,38,Mongolia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,73.80224913970035,116.17222876545468,43.51464061219647
+6,Incidence,11,Indonesia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,7161.133131307632,10882.5813879514,4223.680582205353
+6,Incidence,11,Indonesia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,6596.767213686841,10212.30436823563,3811.8171316761754
+6,Incidence,11,Indonesia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,18108.103538988045,27797.714676790223,10377.477009701975
+6,Incidence,11,Indonesia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,15227.58728131058,23250.442130632026,9032.601177274038
+6,Incidence,38,Mongolia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.5929970718752996,1.6521807877548687,0.11154928810440044
+6,Incidence,38,Mongolia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.9498492006765709,2.8243587530877345,0.1724417579549228
+6,Incidence,38,Mongolia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.8477715993410437,4.900247436929651,0.35365256496538533
+6,Incidence,38,Mongolia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.7808864587783286,4.846360536366879,0.33019365879931184
+6,Incidence,18,Thailand,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,831.316556977778,1284.7227276394551,489.96920403207565
+6,Incidence,18,Thailand,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,799.6731907004374,1224.9607426997327,470.5497647308461
+6,Incidence,18,Thailand,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1863.7452295488758,2914.0824235426862,1102.4464459638439
+6,Incidence,18,Thailand,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1504.0534075545727,2301.00001338041,874.7716805945194
+6,Incidence,161,Bangladesh,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,3389.377081213919,4577.940235640565,2375.3782123267383
+6,Incidence,161,Bangladesh,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,5304.202043649792,7289.113546624751,3676.8057084745087
+6,Incidence,161,Bangladesh,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,7707.8273474751895,11344.657093939348,5101.304225109855
+6,Incidence,161,Bangladesh,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,10743.310010448287,15533.354476889817,6935.164451661786
+6,Incidence,18,Thailand,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.9362484154954192,5.199117945952348,0.4895191296257049
+6,Incidence,18,Thailand,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.8589886564874218,4.894770749023338,0.4604134743349409
+6,Incidence,18,Thailand,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,4.290707502570327,12.041771256434407,1.1118590643869806
+6,Incidence,18,Thailand,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.4624515879683484,9.87231122459426,0.8963130425919019
+6,Incidence,135,Brazil,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,16.249268833041132,49.06168209466812,2.580999998900257
+6,Incidence,135,Brazil,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,19.632043250975897,60.10625173735789,3.040394107365565
+6,Incidence,11,Indonesia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,27.969270739415883,113.22855923024618,2.9871775690767906
+6,Incidence,11,Indonesia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,26.068860666578722,106.30568136819636,2.8366557269959376
+6,Incidence,11,Indonesia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,68.63108668356007,273.44884089400455,6.845747628945234
+6,Incidence,11,Indonesia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,58.72409925030643,247.1317317147398,5.936366271858607
+6,Incidence,18,Thailand,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,21.234287983876282,56.84591462936518,5.360436750033546
+6,Incidence,18,Thailand,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,20.388048654394616,53.74368118122235,5.045364322920394
+6,Incidence,18,Thailand,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,47.06199959424758,132.00390238238862,12.18926165015775
+6,Incidence,18,Thailand,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,37.974477965864935,108.22099286319379,9.827485025123615
+6,Incidence,169,Central African Republic,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.06376351329171553,0.21214531800887115,0.008990548136382163
+6,Incidence,169,Central African Republic,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.06477614012968055,0.22980473750283112,0.00875777225787656
+6,Incidence,169,Central African Republic,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.12838893702063353,0.4387942679064374,0.018512196913566283
+6,Incidence,169,Central African Republic,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.1479264987657411,0.501635994930778,0.02205700071160218
+6,Incidence,6,China,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,14.716958086115646,49.582531181090914,2.3846200409054137
+6,Incidence,6,China,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,13.466456560580662,43.91172318619768,2.2094484843183606
+6,Incidence,6,China,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,65.72283124719269,211.64645057020633,10.8233199778804
+6,Incidence,6,China,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,48.43391625869358,149.57803166273723,7.857997591483246
+6,Incidence,170,Congo,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,183.83331535765055,295.28028687366225,104.09484091053507
+6,Incidence,170,Congo,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,274.3955845524303,443.22636990469704,152.2514905936037
+6,Incidence,170,Congo,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,356.06086918429435,538.3721133134237,218.6628587559469
+6,Incidence,170,Congo,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,611.0217746760991,947.4509596052183,363.6635561979642
+6,Incidence,173,Gabon,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.015671704597962233,0.059673315505611925,0.001876036223403058
+6,Incidence,173,Gabon,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.017358135050598092,0.06706424718629744,0.002009811824195035
+6,Incidence,173,Gabon,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.030073534762576695,0.1144505455169782,0.0036937371947906817
+6,Incidence,173,Gabon,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.041392506929548885,0.15876153143826718,0.005224769381835128
+6,Incidence,180,Kenya,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1148.8245283010453,1986.3136287104126,508.2710755874725
+6,Incidence,180,Kenya,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1331.0342189178373,2365.9264911865807,598.5390146142522
+6,Incidence,180,Kenya,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,6655.82473079385,10225.785496664614,4039.4286045888293
+6,Incidence,180,Kenya,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,6564.747702108239,10266.124002198201,3906.740551456042
+6,Incidence,169,Central African Republic,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,9.883552712113417,32.87614305242851,1.396297420063822
+6,Incidence,169,Central African Republic,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,10.040523061305722,35.6113038413429,1.3550743315202547
+6,Incidence,169,Central African Republic,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,19.900561892896963,67.98533060243516,2.8690838490754578
+6,Incidence,169,Central African Republic,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,22.929997173435254,77.8540844298748,3.409759971457619
+6,Incidence,11,Indonesia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.550290606396533,10.310980494477864,0.2722961508632069
+6,Incidence,11,Indonesia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.3769727385245463,9.693832532705057,0.25862781545925156
+6,Incidence,11,Indonesia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,6.25790171653307,24.959935102094438,0.624303683719661
+6,Incidence,11,Indonesia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,5.354720802372364,22.531109392786878,0.5402869465789005
+6,Incidence,163,India,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,22165.725716889632,33010.24671924548,13458.382170841818
+6,Incidence,163,India,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,35597.26588145746,52054.89360440148,21426.546537336664
+6,Incidence,163,India,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,93252.8109416825,142097.01209810658,57963.36414012491
+6,Incidence,163,India,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,106006.5701702445,165741.73388144985,65370.86310572952
+6,Incidence,16,Philippines,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,417.78670201924325,1056.556548873979,104.74068726829215
+6,Incidence,16,Philippines,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,291.1690056177283,734.5468195329452,73.95593623847158
+6,Incidence,16,Philippines,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,324.6317434317243,820.722331349982,82.75218484603133
+6,Incidence,16,Philippines,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,266.09586521846586,656.1724423669348,68.49860934369806
+6,Incidence,6,China,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,161.40312781916697,543.8786880561076,26.143529740858604
+6,Incidence,6,China,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,147.68537171246916,481.3143105699565,24.236538093071143
+6,Incidence,6,China,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,720.8147503540276,2319.449411227935,118.76591642571714
+6,Incidence,6,China,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,531.1891733244797,1640.2287778979148,86.2208651805035
+6,Incidence,171,Democratic Republic of the Congo,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,4782.3843391530045,7104.627803488879,2918.937752388144
+6,Incidence,171,Democratic Republic of the Congo,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,7750.108277219953,11649.503751346449,4652.367542720082
+6,Incidence,171,Democratic Republic of the Congo,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,8115.73559295837,12177.285960523235,4954.307645303071
+6,Incidence,171,Democratic Republic of the Congo,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,14743.647192777395,22246.346764710186,8872.000220459666
+6,Incidence,189,United Republic of Tanzania,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.3469258242086864,1.2587422909658306,0.05458419890205275
+6,Incidence,189,United Republic of Tanzania,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.4657949668073447,1.6076799764846261,0.07498697241347464
+6,Incidence,189,United Republic of Tanzania,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.9551533359651168,3.3369629713489366,0.15094898332792447
+6,Incidence,189,United Republic of Tanzania,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.2209451030361143,4.27878064279145,0.19116918880711387
+6,Incidence,16,Philippines,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,11308.765856037318,16602.568064564555,7062.531498411307
+6,Incidence,16,Philippines,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,9310.552067893663,13853.777182685466,5777.68828259573
+6,Incidence,16,Philippines,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,14454.338424630123,20452.579615957195,9495.588693982252
+6,Incidence,16,Philippines,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,10099.369174714584,14552.113598023418,6555.498553808172
+6,Incidence,135,Brazil,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,497.47528305380615,781.720137042463,267.9863456194138
+6,Incidence,135,Brazil,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,597.8873733891784,965.7528479416418,322.7567177054298
+6,Incidence,135,Brazil,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,2360.5429491036225,3739.224142317132,1409.4966763353136
+6,Incidence,135,Brazil,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1700.5711083313106,2690.9066402425556,995.2238895243859
+6,Incidence,179,Ethiopia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,120.57446234020516,443.4285002231097,18.61464310350954
+6,Incidence,179,Ethiopia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,150.04841613457083,558.5946271768166,23.27756165018714
+6,Incidence,179,Ethiopia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,409.51207205898453,1558.242546950677,77.10569724454453
+6,Incidence,179,Ethiopia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,422.02500411463535,1571.8868492987979,78.93809489845881
+6,Incidence,189,United Republic of Tanzania,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1991.673992444561,3183.5686749631654,1090.9359821996306
+6,Incidence,189,United Republic of Tanzania,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,2700.591091794777,4290.60921230139,1479.796788395701
+6,Incidence,163,India,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,1728.7394894904737,4819.707049180043,284.0091207419598
+6,Incidence,163,India,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2828.069095681942,7634.491558375686,469.9369968468285
+6,Incidence,163,India,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,7323.588974606836,19798.471630620177,1292.5287638173968
+6,Incidence,163,India,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,8374.582570272472,21912.240392950796,1415.842782440714
+6,Incidence,165,Pakistan,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,9267.731122008845,14327.51262660243,5509.669760897832
+6,Incidence,165,Pakistan,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,24481.195043037365,36351.97777978921,14642.761735083619
+6,Incidence,165,Pakistan,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,22410.701590466186,34327.24271362987,13770.252219042077
+6,Incidence,165,Pakistan,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,33512.41321245997,51173.48117047456,20253.72178043041
+6,Incidence,173,Gabon,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,74.0429353976193,114.99970620422268,44.03427963457997
+6,Incidence,173,Gabon,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,82.00783854640045,130.65082273321,47.04281913237563
+6,Incidence,173,Gabon,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,140.9624047318121,213.75386542019967,85.31352602361346
+6,Incidence,173,Gabon,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,194.48565451268186,299.4688165962242,112.20203847778197
+6,Incidence,170,Congo,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.02407542651621048,0.08579670825400351,0.002850603264898364
+6,Incidence,170,Congo,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.036409714815632856,0.13898871961579196,0.003908720780506176
+6,Incidence,170,Congo,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.048839146873141386,0.1839818466033896,0.00538495728279086
+6,Incidence,170,Congo,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.08395309199082053,0.3085742995027882,0.00950077209300357
+6,Incidence,169,Central African Republic,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,633.9005618151568,974.9653734373836,373.29128032581815
+6,Incidence,169,Central African Republic,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,641.7694816297812,1015.1102747072171,347.80968510490897
+6,Incidence,169,Central African Republic,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1275.810441100684,1859.218576767903,810.7567268625945
+6,Incidence,169,Central African Republic,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1480.7792652501998,2163.1647062711127,874.2175816592681
+6,Incidence,26,Papua New Guinea,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,186.13616916629857,282.51189888250855,106.95067243765862
+6,Incidence,26,Papua New Guinea,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,472.990923367093,720.9066143563036,287.0655995781335
+6,Incidence,26,Papua New Guinea,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,556.5682725697967,763.7222084995213,365.7751106350856
+6,Incidence,26,Papua New Guinea,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,910.6599784344236,1265.3355527467616,599.6177102285548
+6,Incidence,165,Pakistan,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,542.0873041336549,1365.9910357434228,147.25485943204646
+6,Incidence,165,Pakistan,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,1407.8758428806425,3596.0009255084096,386.68729477522515
+6,Incidence,165,Pakistan,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,1311.5733713373347,3301.1441086526615,384.8916671388798
+6,Incidence,165,Pakistan,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,1927.8324739126158,4933.112820587748,554.5796583024165
+6,Incidence,163,India,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,42.3720109012434,118.15173960877004,6.954050846701121
+6,Incidence,163,India,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,69.31506178417145,187.0900672501906,11.516237369145614
+6,Incidence,180,Kenya,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.11897809237300956,0.31698324346383755,0.02630306957123877
+6,Incidence,180,Kenya,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.1385811699172754,0.34737548730923007,0.03014940452140491
+6,Incidence,180,Kenya,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.6925460523414095,1.731246847328266,0.19806688891805108
+6,Incidence,180,Kenya,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.6810744441431559,1.7186679760107328,0.19730340540829078
+6,Incidence,184,Mozambique,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1524.5699616689458,2790.181316748503,551.3463640838577
+6,Incidence,184,Mozambique,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,2094.6136600121013,3659.3012692212337,872.9987226770877
+6,Incidence,184,Mozambique,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,4979.966340262583,7866.256441345936,2743.9014426999506
+6,Incidence,184,Mozambique,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,5692.863435294205,10000.046846176756,2546.793086222966
+6,Incidence,168,Angola,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.30104048321508764,1.0330596252512971,0.034487881312348354
+6,Incidence,168,Angola,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.39317064492797466,1.4355390032340742,0.04277421668064528
+6,Incidence,168,Angola,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.44879545048011654,1.728669858065556,0.05460974010551297
+6,Incidence,168,Angola,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.7164379531877199,2.75654487289891,0.08464992649030002
+6,Incidence,135,Brazil,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.2832665924581812,3.872092807716834,0.20374822420203245
+6,Incidence,135,Brazil,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.5504905538645444,4.750570527341111,0.24014928352134066
+6,Incidence,135,Brazil,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,6.0443952621328805,18.9848379273019,1.1042386080103292
+6,Incidence,135,Brazil,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,4.337647521536513,13.284856262049061,0.751686713178516
+6,Incidence,163,India,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,179.50615094496828,485.7385174864083,31.69050079506389
+6,Incidence,163,India,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,205.25382397410158,536.9418171512908,34.67968098655988
+6,Incidence,170,Congo,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,3.732193753539184,13.312229465745741,0.4415782537806142
+6,Incidence,170,Congo,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,5.643461125328458,21.54225029177492,0.6092983269868838
+6,Incidence,170,Congo,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,7.570094941756847,28.51636841459225,0.8353603710067738
+6,Incidence,170,Congo,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,13.012777708110354,47.94236760348001,1.4730471702964767
+6,Incidence,189,United Republic of Tanzania,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,5453.327292932862,8564.054451568149,3135.307938318011
+6,Incidence,189,United Republic of Tanzania,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,6968.141148565385,11029.91732188354,3975.9495889847135
+6,Incidence,179,Ethiopia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,3647.24217012244,5748.816660932933,2003.9108942295402
+6,Incidence,179,Ethiopia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,4514.97796811912,7152.692994300747,2471.4210499655333
+6,Incidence,179,Ethiopia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,12214.106732682161,18583.053261401114,7430.906964872256
+6,Incidence,179,Ethiopia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,12666.923661837847,19536.086726758975,7578.323700492506
+6,Incidence,173,Gabon,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2.4292446129504968,9.25894915910725,0.2900276316383107
+6,Incidence,173,Gabon,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2.690773573897932,10.391640681917506,0.31250650601329255
+6,Incidence,173,Gabon,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,4.661403524904648,17.752442974791425,0.5726977306317077
+6,Incidence,173,Gabon,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,6.416016800893538,24.53994368671611,0.8096768501628071
+6,Incidence,180,Kenya,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,18.441552375558363,49.12756372974086,4.0763894208694875
+6,Incidence,180,Kenya,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,21.4803983128714,53.82852417046578,4.66873456003932
+6,Incidence,180,Kenya,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,107.3429847556242,268.34098799722324,30.71213355117232
+6,Incidence,180,Kenya,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,105.56955240890072,266.32551899231584,30.575296636943193
+6,Incidence,217,Sierra Leone,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,289.57896891343665,432.8592116146869,185.11748124963782
+6,Incidence,217,Sierra Leone,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,372.2805663491962,554.218903847321,229.7518299062492
+6,Incidence,217,Sierra Leone,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,526.9375050411744,806.4013960506951,315.370742746249
+6,Incidence,217,Sierra Leone,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,684.9812696744436,1072.3401250918666,413.45614126456024
+6,Incidence,210,Liberia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,103.36513356446089,158.80787683958872,64.02690896798764
+6,Incidence,210,Liberia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,139.8840898765225,209.42779142433602,83.77800559738688
+6,Incidence,210,Liberia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,214.6529664170926,330.8802033109763,128.40319791583283
+6,Incidence,210,Liberia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,280.10146171719,433.3355035519898,164.76258248553367
+6,Incidence,168,Angola,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1575.1773269667358,2343.6917529500347,955.988400387987
+6,Incidence,168,Angola,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,2041.1764153579595,3208.8093130421603,1177.6579697663017
+6,Incidence,168,Angola,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,2308.9944865743923,3541.9964579634106,1384.1390436787349
+6,Incidence,168,Angola,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,3705.246313854264,5718.818194699223,2176.5985251671887
+6,Incidence,189,United Republic of Tanzania,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,53.777901925045036,195.01953187849824,8.437109490948892
+6,Incidence,189,United Republic of Tanzania,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,72.19837484666614,249.01317389977623,11.605615601890188
+6,Incidence,189,United Republic of Tanzania,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,148.0617544957536,517.1957494379714,23.401188219519973
+6,Incidence,189,United Republic of Tanzania,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,189.24384759306716,664.4218269369561,29.618880116610946
+6,Incidence,165,Pakistan,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,13.28685548751818,33.49650010774941,3.6172533956865918
+6,Incidence,165,Pakistan,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,34.50619596458259,88.01818216170007,9.468516738233419
+6,Incidence,165,Pakistan,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,32.14556346116424,80.89551077603309,9.435121174825186
+6,Incidence,165,Pakistan,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,47.25029610527012,120.75248019085971,13.606114557234669
+6,Incidence,190,Uganda,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.6214235377601126,1.699598205622234,0.12486428935112794
+6,Incidence,190,Uganda,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.5420421024387314,1.483890660787597,0.10073459779136398
+6,Incidence,190,Uganda,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.6561842301915208,4.527767806735103,0.3388714336306622
+6,Incidence,190,Uganda,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.4976053710713328,4.1155846708638535,0.29270009145076714
+6,Incidence,16,Philippines,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,29.600132991109827,74.8022861411876,7.544197311559439
+6,Incidence,16,Philippines,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,24.26289648075777,59.8274199041355,6.247863135679985
+6,Incidence,16,Philippines,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,38.093893904454795,96.32295508977602,9.54872564871663
+6,Incidence,16,Philippines,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,26.548696931320933,66.95897427969409,6.742137173830088
+6,Incidence,168,Angola,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,46.654598765908965,160.0811259028805,5.340472319806135
+6,Incidence,168,Angola,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,60.93803765690945,222.62968589453516,6.6089940905194196
+6,Incidence,168,Angola,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,69.56576199165573,268.33448785509125,8.476567583030716
+6,Incidence,168,Angola,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,111.0499608211006,426.77703897114486,13.112086476797373
+6,Incidence,190,Uganda,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,2770.8836940391993,4089.2437413460257,1780.8914527300888
+6,Incidence,190,Uganda,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,2416.6265996676693,3744.8903346316542,1468.8614408079663
+6,Incidence,190,Uganda,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,7112.798551775279,9926.580454454088,4876.0972576784025
+6,Incidence,190,Uganda,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,6479.807085008016,9468.373734684234,4172.997802875082
+6,Incidence,171,Democratic Republic of the Congo,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.7841862053478574,3.1705448030376226,0.08915870223278925
+6,Incidence,171,Democratic Republic of the Congo,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.2701076292225282,5.290336030910204,0.14156841410877505
+6,Incidence,194,Lesotho,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,591.132497363624,946.9362668313449,336.29332243991547
+6,Incidence,194,Lesotho,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,1092.485527973723,1795.900206240771,584.6557837943147
+6,Incidence,171,Democratic Republic of the Congo,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,121.54912995830595,491.48060021824426,13.799858387958157
+6,Incidence,171,Democratic Republic of the Congo,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,196.87396865132504,820.0119217863045,21.96601033287932
+6,Incidence,171,Democratic Republic of the Congo,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,206.10093258546445,802.1889697321358,23.630466231034273
+6,Incidence,171,Democratic Republic of the Congo,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,366.6938614640685,1408.230380221522,42.00081428070468
+6,Incidence,179,Ethiopia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.7778896206496415,2.858818387700752,0.11994224308028126
+6,Incidence,179,Ethiopia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.9680159194194555,3.606752846343494,0.15019988041549245
+6,Incidence,179,Ethiopia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.642297459952002,10.066134572046508,0.49759553849106564
+6,Incidence,179,Ethiopia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.7228257012943518,10.153050668663864,0.507702346180441
+6,Incidence,190,Uganda,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,96.31946449525789,263.22310229546173,19.368781226244064
+6,Incidence,190,Uganda,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,84.01733280669959,230.0646447496636,15.608464678389826
+6,Incidence,190,Uganda,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,256.70996951013575,703.3564394550187,52.52840100876079
+6,Incidence,190,Uganda,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,232.1221207983159,637.4498685170299,45.47467012868088
+6,Incidence,194,Lesotho,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,269.5338187213295,487.09160285662966,111.44713929881235
+6,Incidence,194,Lesotho,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,358.1792616551979,620.8427075263324,166.34740978331317
+6,Incidence,194,Lesotho,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,13.16271922224725,33.35929890537794,3.2999458394894363
+6,Incidence,194,Lesotho,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,17.55104426241506,41.51218732724562,4.631162933578315
+6,Incidence,194,Lesotho,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,29.36120906660988,68.9622662704254,8.121914456790828
+6,Incidence,194,Lesotho,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,54.019675242013456,132.58361210327038,15.221888824670161
+6,Incidence,196,South Africa,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,8643.493660521579,12257.290101206203,5377.717713808389
+6,Incidence,196,South Africa,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,10833.336527032538,15802.686666521253,6666.224237022248
+6,Incidence,196,South Africa,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,11120.437144760781,15974.077853046088,7075.67468992418
+6,Incidence,196,South Africa,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,22625.385664059708,32312.767784059008,14076.813986191668
+6,Incidence,195,Namibia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,205.69478297449712,342.43720719467206,104.77257533618008
+6,Incidence,195,Namibia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,240.35711437765957,396.71133974782765,124.01574780868793
+6,Incidence,195,Namibia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,387.1012236683494,604.0492812202234,224.88157068718195
+6,Incidence,195,Namibia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,679.7626168081537,1045.2781557743926,390.14637980815456
+6,Incidence,184,Mozambique,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,84.23936058621301,216.27497961894832,17.82565408467254
+6,Incidence,184,Mozambique,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,116.59753545043772,287.21288719407994,28.231133799071944
+6,Incidence,184,Mozambique,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,288.1025040696883,709.0056584307423,77.03581612520131
+6,Incidence,184,Mozambique,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,321.59762447404245,776.5900828683893,80.87138646368238
+6,Incidence,171,Democratic Republic of the Congo,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.3295477548458512,5.161175518923591,0.1523993836639167
+6,Incidence,171,Democratic Republic of the Congo,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.365773223628993,9.10452211935676,0.2709568646427636
+6,Incidence,194,Lesotho,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.0849258518843976,0.21520039292847915,0.021286340056774863
+6,Incidence,194,Lesotho,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.11323063047013565,0.26810233385288845,0.029905117201702455
+6,Incidence,194,Lesotho,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.18942151496950943,0.4449803185714603,0.05234134945942216
+6,Incidence,194,Lesotho,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.34852177226513276,0.8558560743590535,0.09820503021752498
+6,Incidence,191,Zambia,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,929.1289648347613,1627.7153003583305,406.3555577279257
+6,Incidence,191,Zambia,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,1059.5615865466477,1888.0650135951391,444.2269397009182
+6,Incidence,191,Zambia,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,2863.1694414834146,4673.520272432779,1577.8703325238198
+6,Incidence,191,Zambia,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,3266.380926680432,5391.398463628693,1688.4646971556313
+6,Incidence,191,Zambia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.24165017694846241,0.8470512004920419,0.03032043524899495
+6,Incidence,191,Zambia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.2766389887509963,1.0222130956680227,0.035944088512660614
+6,Incidence,191,Zambia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.7670345516488565,2.8364419893913295,0.11325722431138524
+6,Incidence,191,Zambia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.8634192196913243,3.1455180421452336,0.12617837610745614
+6,Incidence,195,Namibia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,13.319732150905628,30.236831168768965,4.610460399608202
+6,Incidence,195,Namibia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,15.633019428912528,34.275317758812896,5.325039340894979
+6,Incidence,195,Namibia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,25.695697347523488,54.06276932863368,9.32687034108781
+6,Incidence,195,Namibia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,45.23412744718832,96.6260051401135,16.11024848950016
+6,Incidence,196,South Africa,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.5846948318540413,3.849946993114805,0.5175856951096836
+6,Incidence,196,South Africa,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.996202997645873,4.920258360619198,0.659470235737069
+6,Incidence,196,South Africa,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.0650309746190176,5.359839595840692,0.6701187173047065
+6,Incidence,196,South Africa,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,4.189131351556499,10.785403980351624,1.3474824621444192
+6,Incidence,184,Mozambique,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.5434764107115369,1.3956512304030944,0.11506478486795846
+6,Incidence,184,Mozambique,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.7522639217765565,1.8537400587557538,0.18191905993608695
+6,Incidence,184,Mozambique,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.8586292662664168,4.580068955490681,0.4965673477414699
+6,Incidence,184,Mozambique,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,2.07502772262808,5.007155064409286,0.5210216870711212
+6,Incidence,191,Zambia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,37.45569435732607,131.2154909006162,4.6922834915396665
+6,Incidence,191,Zambia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,42.88101060516301,158.48900686859957,5.561464762456722
+6,Incidence,191,Zambia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,118.87883183356814,440.0018107589283,17.539835623444613
+6,Incidence,191,Zambia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,133.81786403458437,487.91163604819604,19.45797842474089
+6,Incidence,214,Nigeria,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,249.6546327234226,699.4446429681266,50.741835320602874
+6,Incidence,214,Nigeria,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,263.313754593211,751.2705558796705,54.20926289698922
+6,Incidence,214,Nigeria,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,479.1740610306591,1367.0991206679475,103.97119767925777
+6,Incidence,214,Nigeria,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,546.6359419401343,1532.5661069404657,118.96429201193341
+6,Incidence,196,South Africa,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,245.63027308684997,596.5836966181214,80.1666894382146
+6,Incidence,196,South Africa,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,309.39991230614567,762.9366475199906,102.17879699883157
+6,Incidence,196,South Africa,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,320.0791326826435,830.9412426716871,103.81277439974924
+6,Incidence,196,South Africa,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,649.3227628986591,1669.709488421742,209.14276547429148
+6,Incidence,195,Namibia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.08592889354002671,0.19511383157829196,0.02970302917671516
+6,Incidence,195,Namibia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.10085099535434881,0.22124932971389094,0.034408198273404376
+6,Incidence,195,Namibia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.16577710349980743,0.3486644360141934,0.060196003132695325
+6,Incidence,195,Namibia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.29182803578365907,0.6236098032505842,0.10396428595799585
+6,Incidence,210,Liberia,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.01344686509185502,0.05474697409464058,0.0016155890460298002
+6,Incidence,210,Liberia,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.018128141571753614,0.07400076435822259,0.002109933567280996
+6,Incidence,210,Liberia,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.027966977256277552,0.1230404026605543,0.00298211758607577
+6,Incidence,210,Liberia,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.036441588489037814,0.15362072513222333,0.003960523931501148
+6,Incidence,217,Sierra Leone,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.04196971916730247,0.1389312668374658,0.005696156957191547
+6,Incidence,217,Sierra Leone,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.05423676501762728,0.1776276138854558,0.0071860744079016315
+6,Incidence,217,Sierra Leone,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.07895423354372294,0.2603052095490189,0.01022051690926259
+6,Incidence,217,Sierra Leone,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,0.10417968226343136,0.33219328966433226,0.01340643127855092
+6,Incidence,217,Sierra Leone,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,6.506207438073758,21.53796891576681,0.884403317037635
+6,Incidence,217,Sierra Leone,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,8.40684978893174,27.529749844355546,1.1182695720324387
+6,Incidence,217,Sierra Leone,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,12.238896385667486,40.34038024085944,1.5852021726266279
+6,Incidence,217,Sierra Leone,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,16.150374860689052,51.464964254251655,2.0796138649373628
+6,Incidence,214,Nigeria,1,Male,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,5848.938107939347,8843.00020006732,3537.595703580006
+6,Incidence,214,Nigeria,2,Female,7,10-14 years,934,Drug-susceptible tuberculosis,1,Number,2019,6170.024808123802,9360.586127473476,3765.705389162104
+6,Incidence,214,Nigeria,1,Male,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,10933.377619126935,16787.94196616322,6752.710680539011
+6,Incidence,214,Nigeria,2,Female,8,15-19 years,934,Drug-susceptible tuberculosis,1,Number,2019,12540.128525065053,19181.46948991505,7435.276042407161
+6,Incidence,210,Liberia,1,Male,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2.0842477358460525,8.5186722043668,0.2503267734641807
+6,Incidence,210,Liberia,2,Female,7,10-14 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,2.8100172694326493,11.461450908053274,0.32711624768024833
+6,Incidence,210,Liberia,1,Male,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,4.334637677699649,19.08872080330041,0.46441299990325624
+6,Incidence,210,Liberia,2,Female,8,15-19 years,946,Multidrug-resistant tuberculosis without extensive drug resistance,1,Number,2019,5.649170864693576,23.82829909434296,0.6140573951879235
+6,Incidence,214,Nigeria,1,Male,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.6106871687097994,4.5150713127920685,0.3273285407496797
+6,Incidence,214,Nigeria,2,Female,7,10-14 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,1.6988150960593975,4.849108669503201,0.3497841852098088
+6,Incidence,214,Nigeria,1,Male,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.0914193697812533,8.820709895885614,0.6702961604136347
+6,Incidence,214,Nigeria,2,Female,8,15-19 years,947,Extensively drug-resistant tuberculosis,1,Number,2019,3.5266377118322834,9.888259213558737,0.7674888720368491

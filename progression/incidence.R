@@ -641,6 +641,27 @@ IIT <- IIT[,.(acat,fmeth='IHME',inc.num.mid=ihme,
               inc.num.lo=ihme-1.96*ihme.sd,
               inc.num.hi=ihme+1.96*ihme.sd)]
 
+## as above but by sex
+II2 <- fread(gh('rawdata/IHME-GBD_2019_DATA-01b94590-1.csv'))
+II2 <- merge(II2,ckey,by.x='location_name',by.y='ihme',all.x=TRUE)
+II2[,isd:=(upper-lower)/3.92]
+II2[,acat:=gsub(' years','',age_name)]
+II2 <- II2[,.(ihme=sum(val),ihme.sd=ssum(isd)),by=.(iso3,newcountry,acat,sex=tolower(sex_name))]
+IIT2 <- II2[,.(ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=.(acat,sex)]
+IIT3 <- IIT2[,.(acat='10-19',ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=sex]
+IIT2 <- rbind(IIT2,IIT3)
+IIT2 <- IIT2[,.(acat,fmeth='IHME',sex,
+                inc.num.mid=ihme,
+              inc.num.lo=ihme-1.96*ihme.sd,
+              inc.num.hi=ihme+1.96*ihme.sd)]
+
+## check vs IIT OK
+IIT2[,sum(inc.num.mid),by=acat]
+
+## output
+IIT2[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+fwrite(IIT2[,.(acat,sex,fmeth,txt)],file=fn <- gh('outdata/cf.ihme.sex.csv'))
+
 ## snow approach, same splits
 ## ========== active TB =======
 fn <- gh('rawdata/TB_burden_age_sex_2020-10-15.csv')
