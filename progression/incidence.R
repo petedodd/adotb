@@ -595,6 +595,21 @@ ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
 ggsave(GPP,file=here('plots/MFcountryFULL.pdf'),h=7,w=7)
 
 
+## for text
+mfmed <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='assortative']
+cat(mfmed[,median(mf)],file=gh('outdata/mf.median.y.txt'))
+
+## For the 15-19 year age group, 
+## the median factor increase in male-to-female ratio due to sex-assortative mixing in this group was Z.
+mfmed <- MF[acat=='15-19' & variable=='with risk factors']
+mfmed <- dcast(mfmed,iso3 ~ mixing,value.var='mf')
+cat(mfmed[,median(assortative/random)],file=gh('outdata/mf.median.mix.o.txt'))
+
+## The median increase in male-to-female ratio between the two age groups was Y. 
+mfmed <- MF[variable=='with risk factors' & mixing=='assortative']
+mfmed <- dcast(mfmed,iso3~acat,value.var='mf')
+cat(mfmed[,median(`15-19`/`10-14`)],file=gh('outdata/mf.median.age.txt'))
+
 ## percentages
 ## dQ/Q=dlog(A/B) = dA/A + dB/B
 PC <- rnrss[mixing=='assortative',
