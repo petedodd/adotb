@@ -243,7 +243,6 @@ load(file=here('PAF/data/IRR.Rdata'))
 IRR[,PAF.hiv:=1-1/(1-hiv+hiv*irr)]
 IRR[,PAF.bmi:=1-1/(1-1.0+1.0*RRbmi)] #coverage is 1 since average for all population
 
-## TODO is HIV uncertainty included?
 
 ## summary table
 IRRSS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
@@ -271,8 +270,6 @@ GP + geom_segment(data=tmp,aes(x=hiv.mid_F,xend=hiv.mid_M,
 
 ggsave(GP,file=here('plots/PAFsexCF.png'),h=8,w=15)
 
-## TODO perhaps incude segments in the above to higlight sex pairings?
-
 IRRS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
                 a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
                 hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
@@ -282,8 +279,6 @@ IRRS <- merge(IRRS,
               UWS[,.(iso3,acat,th.mid=p2SD,th.lo=pmax(p2SD-1.96*p2SD.sd,0),th.hi=p2SD+1.96*p2SD.sd)],
               by=c('iso3','acat')) #merge underweight data
 
-## below for table 1 TODO check unc
-## TODO also include unceretainty in thinness estimates
 ## IRRS[,thinness:=paste0(rds(th.mid*1e2))]
 IRRS[,thinness:=fmtpc(th.mid,th.lo,th.hi)]
 IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
@@ -319,6 +314,11 @@ GP <- ggplot(DRAML,aes(age,RR,ymin=RR-RR.sd*1.96,ymax=RR+RR.sd*1.96,col=sex,grou
 
 ggsave(GP,file=here('plots/bmiRRbyage.png'),h=10,w=10)
 
+## how much of age difference is driven by BMI?
+bmia <- DRAML[,.(RR=mean(RR)),by=.(acat,Country)]
+bmia <- dcast(bmia,Country ~ acat,value.var = 'RR')
+bmia[,RR:=`15-19`/`10-14`]
+fwrite(bmia,file=here('outdata/bmia.csv'))
 
 ## MF plot
 MF <- IRR[,.(replicate,iso3,sex,acat,RRB = RRbmi * (1-hiv+hiv*irr) )]
