@@ -320,6 +320,7 @@ bmia <- dcast(bmia,Country ~ acat,value.var = 'RR')
 bmia[,RR:=`15-19`/`10-14`]
 fwrite(bmia,file=here('outdata/bmia.csv'))
 
+
 ## MF plot
 MF <- IRR[,.(replicate,iso3,sex,acat,RRB = RRbmi * (1-hiv+hiv*irr) )]
 MF <- dcast(MF,replicate+iso3+acat ~ sex,value.var = 'RRB')

@@ -32,7 +32,6 @@ upload.to.sheets <- function(basename,filename,sheetid
 
 ## upload relevant table data
 upload.to.sheets(here('outdata/'),'cftab',shid) #first will need to re-authenticate
-upload.to.sheets(here('outdata/'),'smy.inc',shid) #first will need to re-authenticate
 
 ## rest can be run as block
 flz1 <- c(
@@ -49,6 +48,7 @@ flz1 <- c(
   'nhiv.csv',
   'out.inc.csv',
   'out.ltbi.csv',
+  'out.ltbi.sex',
   'PAF.csv',
   'PC_ranked_1014.csv',
   'PC_ranked_1519.csv',

@@ -308,6 +308,17 @@ setcolorder(out.ltbi,c("iso3","LTBI.fmt_10-14","LTBI2.fmt_10-14","LTBI1.fmt_10-1
 
 fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
 
+
+## LTBI by sex
+out.ltbi.sex <- copy(rnrtot2)
+out.ltbi.sex[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi )]
+out.ltbi.sex[,LTBI1.fmt:=fmtb(LTBI1.mid,LTBI1.lo,LTBI1.hi )]
+out.ltbi.sex[,LTBI2.fmt:=fmtb(LTBI2.mid,LTBI2.lo,LTBI2.hi )]
+out.ltbi.sex <- out.ltbi.sex[,.(sex,acat,mixing,LTBI1.fmt,LTBI2.fmt,LTBI.fmt)]
+setkey(out.ltbi.sex,mixing,acat,sex)
+
+fwrite(out.ltbi.sex,file=here('outdata/out.ltbi.sex.csv'))
+
 ## incidence etc by country
 out.inc <- smy[,.(iso3,acat,mixing,inc.num.fmt,inc.num0.fmt,notified,CDR,CDR0)]
 out.inc <- melt(out.inc,id=c('iso3','acat','mixing'))
