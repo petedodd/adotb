@@ -163,7 +163,7 @@ rnras[,table(mixing)]
 ## P1 = any 1 year
 ## P2 = any infection within 2 years
 
-## TODO some LTBI outputs by sex
+## some LTBI outputs by sex?
 ## plot
 rnras2 <- rnra[,.(`infection >=2 years`=mean(P-P2),
                   `infection 1-2 years`=mean(P2-P1),

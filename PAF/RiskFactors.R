@@ -79,6 +79,7 @@ DRA[,any(RR.sd<0)]
 DRA[,any(RR.hi<RR.lo)]
 DRA[,any(RR.hi<RR)]
 DRA[,any(RR.lo>RR)]
+
 ## save
 save(DRA,file=here('PAF/data/DRAgamma.Rdata'))
 
@@ -232,6 +233,42 @@ ggsave(GP2,file=here('plots/UWcf.png'),h=5,w=10)
 ## combine
 IRR <- merge(IRR,DRAM[,.(replicate,iso3,sex,acat,RRbmi=RR,thin=RR)],
              by=c('replicate','iso3','sex','acat'))
+
+## ====== pregnancy & postpartum ===
+load(file = here("rawdata/PD.Rdata")) # WPP age-specific pregnancy rates
+## demographics treated as equally weighted mean
+PD <- PD[ISO3_code %in% IRR[, unique(iso3)] & AgeGrp <= 19, .(iso3 = ISO3_code,ASFR)]
+PD <- PD[, .(ASFR = mean(ASFR)), by = iso3] #average for 15-19 age gp (F)
+PD[,preg.prev:=0.75 * ASFR / 1e3] #prevalence of pregnancy assuming 9 months
+PD[, preg.PP := 0.5 * ASFR / 1e3] # prevalence of postpartum assuming 6 months TODO CHECK 
+
+## TODO create parameter placeholders
+pg.pmz <- getLNparms(1.3,((1.9-1.1)/3.92)^2) #TODO
+pp.pmz <- getLNparms(1.9, ((2.5 - 1.5) / 3.92)^2) # TODO
+
+## --- PSAify
+PDA <- PD[rep(1:nrow(PD), each = max(IRR$replicate))]
+PDA[, replicate := rep(1:max(IRR$replicate), nrow(PD))]
+PDA[, pg.irr := rlnorm(nrow(PDA), meanlog = pg.pmz$mu, sdlog = pg.pmz$sig)]
+PDA[, pp.irr := rlnorm(nrow(PDA), meanlog = pp.pmz$mu, sdlog = pp.pmz$sig)]
+PDA[, c("sex", "acat") := .("F", "15-19")]
+
+## add in other sexes/ages
+PDAxtra <- copy(PDA)
+PDAxtra[, c("preg.prev", "preg.PP", "pg.irr", "pp.irr") := .(0, 0, 1, 1)]
+PDAxtra[, acat := "10-14"]
+PDA <- rbind(PDA,PDAxtra) #F 10-14
+PDAxtra[, sex := "M"]
+PDA <- rbind(PDA, PDAxtra) # M 10-14
+PDAxtra[, acat := "15-19"]
+PDA <- rbind(PDA, PDAxtra) # M 15-19
+## check:
+unique(PDA[,.(sex,acat)])
+
+## merge in
+PDA[, ASFR := NULL] # drop
+IRR <- merge(IRR,PDA,by=c('replicate','iso3','sex','acat'),all.x=TRUE,all.y=FALSE)
+summary(IRR) #check
 
 
 save(IRR,file=here('PAF/data/IRR.Rdata'))
