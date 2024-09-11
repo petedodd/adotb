@@ -8,7 +8,7 @@ library(ggrepel)
 library(glue)
 library(HEdtree)
 library(ggarchery)
-library(ungeviz)
+library(ungeviz) # devtools::install_github("wilkelab/ungeviz")
 library(ggh4x)
 library(ggpubr)
 library(grid)
@@ -36,9 +36,17 @@ fmt1 <- function(x,y,z) paste0(rd1(x)," (",rd1(y)," to ",rd1(z),")")
 gh <- function(x) glue(here(x))
 rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-set.seed(1234)
+load(here("progression/data/ckey.Rdata"))
 
-load(here('progression/data/ckey.Rdata'))
+
+set.seed(1234)
+## sensitivity analysis flag
+slowon <- FALSE # by default, include slow progression, FALSE = off
+if (slowon) {
+  cat("Running basecase slow progression assumption!\n")
+} else {
+  cat("Running SA with slow progression off!\n")
+}
 
 
 ## Martinez 2-year progression rates:
@@ -66,11 +74,13 @@ pzo1 <- getAB(pmo1,pvo1);
 ## pzo2 <- getAB(pmo2,pvo2)
 pzo2 <- getLNparms(pmo2,pvo2)
 ## curve(dbeta(x,pzo1$a,pzo1$b));curve(dbeta(x,pzo2$a,pzo2$b))
-pzzb <- data.table(acat=c('10-14','15-19'),
-                   A1=c(pzy1$a,pzo1$a),B1=c(pzy1$b,pzo1$b),
-                   ## A2=c(pzy2$a,pzo2$a),B2=c(pzy2$b,pzo2$b)
-                   m2=c(pzy2$mu,pzo2$mu),s2=c(pzy2$sig,pzo2$sig)
-                   )
+pzzb <- data.table(
+  acat = c("10-14", "15-19"),
+  A1 = c(pzy1$a, pzo1$a), B1 = c(pzy1$b, pzo1$b),
+  ## A2=c(pzy2$a,pzo2$a),B2=c(pzy2$b,pzo2$b)
+  m2 = c(pzy2$mu, pzo2$mu), s2 = c(pzy2$sig, pzo2$sig)
+)
+
 
 ## Ragonnet slow progression for >2 years:
 eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
@@ -78,278 +88,378 @@ eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
 
 ## load LTBI:
 ## load(file=gh('LTBI/data/rnra.Rdata'))
-load(file=gh('LTBI/tmpdata/rnra.full.Rdata'))
+load(file = gh("LTBI/tmpdata/rnra.full.Rdata"))
 
 ## add in acats
-rnra[,acat:=ifelse(age>14,'15-19','10-14')]
-table(rnra$acat) #OK
-rnra$acat <- factor(rnra$acat,levels=c('10-14','15-19'),ordered = TRUE)
-rnra <- merge(rnra,pzzb,by='acat',all.x=TRUE)
-rnra <- rnra[order(mixing,replicate,iso3,age)]
+rnra[, acat := ifelse(age > 14, "15-19", "10-14")]
+table(rnra$acat) # OK
+rnra$acat <- factor(rnra$acat, levels = c("10-14", "15-19"), ordered = TRUE)
+rnra <- merge(rnra, pzzb, by = "acat", all.x = TRUE)
+rnra <- rnra[order(mixing, replicate, iso3, age)]
 
 ## ensure paired over mixing:
-rnra[mixing=='assortative',prog.recent1:=rbeta(sum(mixing=='assortative'),shape1=A1,shape2=B1)]
-rnra[,prog.recent1:=rep(prog.recent1[1:sum(mixing=='assortative')],2)]
-rnra[mixing=='assortative',prog.recent2:=rlnorm(sum(mixing=='assortative'),meanlog = m2,sdlog = s2)]
-rnra[,prog.recent2:=rep(prog.recent2[1:sum(mixing=='assortative')],2)]
+rnra[mixing == "assortative",
+     prog.recent1 := rbeta(sum(mixing == "assortative"), shape1 = A1, shape2 = B1)]
+rnra[, prog.recent1 := rep(prog.recent1[1:sum(mixing == "assortative")], 2)]
+rnra[mixing == "assortative",
+     prog.recent2 := rlnorm(sum(mixing == "assortative"), meanlog = m2, sdlog = s2)]
+rnra[, prog.recent2 := rep(prog.recent2[1:sum(mixing == "assortative")], 2)]
 
-tmp <- rep(rlnorm(nrow(rnra)/2,meanlog=eps$meanlog,sdlog=eps$sdlog),2)
-rnra[,prog.slow:=tmp]
+
+tmp <- rep(rlnorm(nrow(rnra) / 2, meanlog = eps$meanlog, sdlog = eps$sdlog), 2)
+rnra[,prog.slow:=tmp * slowon]
 ## incidence
-rnra[,inc0.a:=(P1) * prog.recent1 + (P2-P1) * prog.recent2 + (P-P2) * prog.slow] #baseline incidence
-rnra[,inc0.m:=(m.P1) * prog.recent1 + (m.P2-m.P1) * prog.recent2 + (m.P-m.P2) * prog.slow] #baseline incidence, males
-rnra[,inc0.f:=(f.P1) * prog.recent1 + (f.P2-f.P1) * prog.recent2 + (f.P-f.P2) * prog.slow] #baseline incidence, females
+rnra[, inc0.a := (P1) * prog.recent1 + (P2 - P1) * prog.recent2 + (P - P2) * prog.slow] # baseline incidence
+rnra[, inc0.m := (m.P1) * prog.recent1 + (m.P2 - m.P1) * prog.recent2 + (m.P - m.P2) * prog.slow] # baseline incidence, males
+rnra[, inc0.f := (f.P1) * prog.recent1 + (f.P2 - f.P1) * prog.recent2 + (f.P - f.P2) * prog.slow] # baseline incidence, females
 
 
 ## notification data for comparison
-fn <- gh('progression/data/NR.Rdata')
+fn <- gh("progression/data/NR.Rdata")
 load(fn)
 
 ## relative risk data
-load(gh('PAF/data/IRR.Rdata'))
-load(here('PAF/data/DRAgamma.Rdata')) #BMI data by age & sex
+load(gh("PAF/data/IRR.Rdata"))
+load(here("PAF/data/DRAgamma.Rdata")) # BMI data by age & sex
 
 ## include HIV & pop
-DRA <- merge(DRA[,.(Country,Sex,age,RR,RR.sd)],ckey[,.(iso3,Country=newcountry)],by='Country')
-DRA[,sex:=ifelse(Sex=='Boys','M','F')]
-DRA <- DRA[age>9]
+DRA <- merge(DRA[, .(Country, Sex, age, RR, RR.sd)],
+             ckey[, .(iso3, Country = newcountry)], by = "Country")
+DRA[, sex := ifelse(Sex == "Boys", "M", "F")]
+DRA <- DRA[age > 9]
 
 ## include sex in rnra
-rnra <- melt(rnra[,.(acat,iso3,mixing,replicate,age,
-                     m.P,m.P1,m.P2,m.inc0=inc0.m,
-                     f.P,f.P1,f.P2,f.inc0=inc0.f)],
-             id=c('acat','iso3','mixing','replicate','age'))
-rnra[,c('sex','variable'):=tstrsplit(variable,split='\\.')]
-rnra[,sex:=toupper(sex)]
-rnra <- dcast(data=rnra,acat+iso3+mixing+replicate+age+sex ~ variable,value.var='value')
+rnra <- melt(
+  rnra[, .(acat, iso3, mixing, replicate, age,
+    m.P, m.P1, m.P2,
+    m.inc0 = inc0.m,
+    f.P, f.P1, f.P2, f.inc0 = inc0.f
+  )],
+  id = c("acat", "iso3", "mixing", "replicate", "age")
+)
+rnra[, c("sex", "variable") := tstrsplit(variable, split = "\\.")]
+rnra[, sex := toupper(sex)]
+rnra <- dcast(data = rnra, acat + iso3 + mixing + replicate + age + sex ~ variable, value.var = "value")
 
 ## checks for pattern: OK
-rnra[,sum(inc0),by=.(sex,mixing)]
-rnra[,sum(inc0),by=.(sex,mixing,acat)]
+rnra[, sum(inc0), by = .(sex, mixing)]
+rnra[, sum(inc0), by = .(sex, mixing, acat)]
+
 
 ## merge in
-rnra <- merge(rnra,DRA[,.(iso3,sex,age,RR,RR.sd)],
-              by=c('iso3','sex','age'))
-rnra[,RR:=rnorm(nrow(rnra),mean=RR,sd=RR.sd)]
+rnra <- merge(rnra, DRA[, .(iso3, sex, age, RR, RR.sd)],
+  by = c("iso3", "sex", "age")
+)
+rnra[, RR := rnorm(nrow(rnra), mean = RR, sd = RR.sd)] #LTBI & BMI RR
 
-rnr <- rnra[,.(P=mean(P),P1=mean(P1),P2=mean(P2),inc0=mean(inc0),IRRthin=mean(RR)),
-               by=.(iso3,sex,acat,replicate,mixing)] #mean over ages
+rnr <- rnra[, .(P = mean(P), P1 = mean(P1), P2 = mean(P2), inc0 = mean(inc0), IRRthin = mean(RR)),
+  by = .(iso3, sex, acat, replicate, mixing)
+  ] # mean over ages
+
+## include IRRs
 rnr <- merge(rnr,
-             IRR[,.(value=pop,iso3,acat,sex,replicate,
-                    hiv,irr)],
-             by=c('iso3','sex','acat','replicate'))
-rnr[,LTBI:=P*value]
-rnr[,LTBI1:=P1*value]
-rnr[,LTBI2:=P2*value]
-rnr[,inc.num0:=inc0*value]
-rnr[,inc:=inc0 * (1-hiv+hiv*irr)*(1-1.0 + 1.0*IRRthin)]
-rnr[,inc.num:=inc*value]
+  IRR[, .(
+    value = pop, iso3, acat, sex, replicate,
+    hiv, irr,
+    ppp = preg.prev + preg.PP, # both preg and PP
+    ## combined IRR for preg& PP state
+    IRRppp = (preg.prev * pg.irr + preg.PP * pp.irr) / (preg.prev + preg.PP + 1e-9)
+  )],
+  by = c("iso3", "sex", "acat", "replicate")
+)
+
+## compute prevalence & incidence
+rnr[, LTBI := P * value]
+rnr[, LTBI1 := P1 * value]
+rnr[, LTBI2 := P2 * value]
+rnr[, inc.num0 := inc0 * value]
+## NOTE 1) IRRthin already averaged across whole population; 2) x-active assumption
+rnr[, inc := inc0 * (1 - hiv + hiv * irr) * (1 - 1.0 + 1.0 * IRRthin) * (1 - ppp + ppp * IRRppp)]
+rnr[, inc.num := inc * value]
 
 
 ## summarize
-rnrss <- rnr[,.(P=mean(P),inc0=mean(inc0),inc=mean(inc),
-                LTBI=sum(LTBI),
-                inc.num0=sum(inc.num0),inc.num=sum(inc.num),
-                LTBI1=sum(LTBI1),P1=mean(P1),
-                LTBI2=sum(LTBI2),P2=mean(P2)
-                ),
-             by=.(iso3,acat,mixing,replicate)] #mean/hi/lo
-rnrss <- rnrss[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
-                LTBI.mid=mean(LTBI),
-                inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
-                LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
-                LTBI1.lo=lo(LTBI1),P1.lo=mean(P1),
-                LTBI1.hi=hi(LTBI1),P1.hi=mean(P1),
-                LTBI2.mid=mean(LTBI2),P2.mid=mean(P2),
-                LTBI2.lo=lo(LTBI2),P2.lo=mean(P2),
-                LTBI2.hi=hi(LTBI2),P2.hi=mean(P2),
-                P.lo=lo(P),P.hi=hi(P),
-                inc0.hi=hi(inc0),inc0.lo=lo(inc0),
-                inc.hi=hi(inc),inc.lo=lo(inc),
-                LTBI.lo=lo(LTBI), LTBI.hi=hi(LTBI),
-                inc.num0.hi=hi(inc.num0),inc.num0.lo=lo(inc.num0),
-                inc.num.hi=hi(inc.num),inc.num.lo=lo(inc.num)
-                ),
-             by=.(iso3,acat,mixing)] #mean/hi/lo
-rnrss2 <- rnr[,.(P.mid=mean(P),inc0.mid=mean(inc0),inc.mid=mean(inc),
-                LTBI.mid=mean(LTBI),
-                inc.num0.mid=mean(inc.num0),inc.num.mid=mean(inc.num),
-                LTBI1.mid=mean(LTBI1),P1.mid=mean(P1),
-                LTBI1.lo=lo(LTBI1),P1.lo=mean(P1),
-                LTBI1.hi=hi(LTBI1),P1.hi=mean(P1),
-                LTBI2.mid=mean(LTBI2),P2.mid=mean(P2),
-                LTBI2.lo=lo(LTBI2),P2.lo=mean(P2),
-                LTBI2.hi=hi(LTBI2),P2.hi=mean(P2),
-                P.lo=lo(P),P.hi=hi(P),
-                inc0.hi=hi(inc0),inc0.lo=lo(inc0),
-                inc.hi=hi(inc),inc.lo=lo(inc),
-                LTBI.lo=lo(LTBI), LTBI.hi=hi(LTBI),
-                inc.num0.hi=hi(inc.num0),inc.num0.lo=lo(inc.num0),
-                inc.num.hi=hi(inc.num),inc.num.lo=lo(inc.num)
-                ),
-             by=.(iso3,sex,acat,mixing)] #mean/hi/lo
+rnrss <- rnr[, .(
+  P = mean(P), inc0 = mean(inc0), inc = mean(inc),
+  LTBI = sum(LTBI),
+  inc.num0 = sum(inc.num0), inc.num = sum(inc.num),
+  LTBI1 = sum(LTBI1), P1 = mean(P1),
+  LTBI2 = sum(LTBI2), P2 = mean(P2)
+),
+by = .(iso3, acat, mixing, replicate)
+] # mean/hi/lo
+rnrss <- rnrss[, .(
+  P.mid = mean(P), inc0.mid = mean(inc0), inc.mid = mean(inc),
+  LTBI.mid = mean(LTBI),
+  inc.num0.mid = mean(inc.num0), inc.num.mid = mean(inc.num),
+  LTBI1.mid = mean(LTBI1), P1.mid = mean(P1),
+  LTBI1.lo = lo(LTBI1), P1.lo = mean(P1),
+  LTBI1.hi = hi(LTBI1), P1.hi = mean(P1),
+  LTBI2.mid = mean(LTBI2), P2.mid = mean(P2),
+  LTBI2.lo = lo(LTBI2), P2.lo = mean(P2),
+  LTBI2.hi = hi(LTBI2), P2.hi = mean(P2),
+  P.lo = lo(P), P.hi = hi(P),
+  inc0.hi = hi(inc0), inc0.lo = lo(inc0),
+  inc.hi = hi(inc), inc.lo = lo(inc),
+  LTBI.lo = lo(LTBI), LTBI.hi = hi(LTBI),
+  inc.num0.hi = hi(inc.num0), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num.lo = lo(inc.num)
+),
+by = .(iso3, acat, mixing)
+] # mean/hi/lo
+rnrss2 <- rnr[, .(
+  P.mid = mean(P), inc0.mid = mean(inc0), inc.mid = mean(inc),
+  LTBI.mid = mean(LTBI),
+  inc.num0.mid = mean(inc.num0), inc.num.mid = mean(inc.num),
+  LTBI1.mid = mean(LTBI1), P1.mid = mean(P1),
+  LTBI1.lo = lo(LTBI1), P1.lo = mean(P1),
+  LTBI1.hi = hi(LTBI1), P1.hi = mean(P1),
+  LTBI2.mid = mean(LTBI2), P2.mid = mean(P2),
+  LTBI2.lo = lo(LTBI2), P2.lo = mean(P2),
+  LTBI2.hi = hi(LTBI2), P2.hi = mean(P2),
+  P.lo = lo(P), P.hi = hi(P),
+  inc0.hi = hi(inc0), inc0.lo = lo(inc0),
+  inc.hi = hi(inc), inc.lo = lo(inc),
+  LTBI.lo = lo(LTBI), LTBI.hi = hi(LTBI),
+  inc.num0.hi = hi(inc.num0), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num.lo = lo(inc.num)
+),
+by = .(iso3, sex, acat, mixing)
+] # mean/hi/lo
+
 
 
 ## LTBI TOTAL
-rnrtot <- rnr[,.(P=weighted.mean(P,value),
-                 P1=weighted.mean(P1,value),
-                 P2=weighted.mean(P2,value),
-                 LTBI=sum(LTBI),
-                 LTBI1=sum(LTBI1),
-                 LTBI2=sum(LTBI2)
-                 ), by=.(acat,replicate,mixing)]
-rnrtot <- rnrtot[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
-                    LTBI.mid=mean(LTBI),LTBI1.mid=mean(LTBI1),LTBI2.mid=mean(LTBI2),
-                    P.lo=lo(P),P1.lo=lo(P1),P2.lo=lo(P2),
-                    LTBI.lo=lo(LTBI),LTBI1.lo=lo(LTBI1),LTBI2.lo=lo(LTBI2),
-                    P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
-                    LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
-                 by=.(acat,mixing)]
+rnrtot <- rnr[, .(
+  P = weighted.mean(P, value),
+  P1 = weighted.mean(P1, value),
+  P2 = weighted.mean(P2, value),
+  LTBI = sum(LTBI),
+  LTBI1 = sum(LTBI1),
+  LTBI2 = sum(LTBI2)
+), by = .(acat, replicate, mixing)]
+rnrtot <- rnrtot[, .(
+  P.mid = mean(P), P1.mid = mean(P1), P2.mid = mean(P2),
+  LTBI.mid = mean(LTBI), LTBI1.mid = mean(LTBI1), LTBI2.mid = mean(LTBI2),
+  P.lo = lo(P), P1.lo = lo(P1), P2.lo = lo(P2),
+  LTBI.lo = lo(LTBI), LTBI1.lo = lo(LTBI1), LTBI2.lo = lo(LTBI2),
+  P.hi = hi(P), P1.hi = hi(P1), P2.hi = hi(P2),
+  LTBI.hi = hi(LTBI), LTBI1.hi = hi(LTBI1), LTBI2.hi = hi(LTBI2)
+),
+by = .(acat, mixing)
+]
 ## by sex and age
-rnrtot2 <- rnr[,.(P=weighted.mean(P,value),
-                 P1=weighted.mean(P1,value),
-                 P2=weighted.mean(P2,value),
-                 LTBI=sum(LTBI),
-                 LTBI1=sum(LTBI1),
-                 LTBI2=sum(LTBI2)
-                 ), by=.(sex,acat,replicate,mixing)]
-rnrtot2 <- rnrtot2[,.(P.mid=mean(P),P1.mid=mean(P1),P2.mid=mean(P2),
-                    LTBI.mid=mean(LTBI),LTBI1.mid=mean(LTBI1),LTBI2.mid=mean(LTBI2),
-                    P.lo=lo(P),P1.lo=lo(P1),P2.lo=lo(P2),
-                    LTBI.lo=lo(LTBI),LTBI1.lo=lo(LTBI1),LTBI2.lo=lo(LTBI2),
-                    P.hi=hi(P),P1.hi=hi(P1),P2.hi=hi(P2),
-                    LTBI.hi=hi(LTBI),LTBI1.hi=hi(LTBI1),LTBI2.hi=hi(LTBI2)),
-                 by=.(sex,acat,mixing)]
+rnrtot2 <- rnr[, .(
+  P = weighted.mean(P, value),
+  P1 = weighted.mean(P1, value),
+  P2 = weighted.mean(P2, value),
+  LTBI = sum(LTBI),
+  LTBI1 = sum(LTBI1),
+  LTBI2 = sum(LTBI2)
+), by = .(sex, acat, replicate, mixing)]
+rnrtot2 <- rnrtot2[, .(
+  P.mid = mean(P), P1.mid = mean(P1), P2.mid = mean(P2),
+  LTBI.mid = mean(LTBI), LTBI1.mid = mean(LTBI1), LTBI2.mid = mean(LTBI2),
+  P.lo = lo(P), P1.lo = lo(P1), P2.lo = lo(P2),
+  LTBI.lo = lo(LTBI), LTBI1.lo = lo(LTBI1), LTBI2.lo = lo(LTBI2),
+  P.hi = hi(P), P1.hi = hi(P1), P2.hi = hi(P2),
+  LTBI.hi = hi(LTBI), LTBI1.hi = hi(LTBI1), LTBI2.hi = hi(LTBI2)
+),
+by = .(sex, acat, mixing)
+]
 
 
 ## inc totals
-rnrtoti <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(acat,mixing,replicate)]
-rnrtoti <- rnrtoti[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
-                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
-                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
-                   by=.(acat,mixing)]
-rnrtot <- merge(rnrtot,rnrtoti,by=c('acat','mixing'))
-rnrtot[,iso3:='TOTAL']
+rnrtoti <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)), by = .(acat, mixing, replicate)]
+rnrtoti <- rnrtoti[, .(
+  inc.num.mid = mean(inc.num), inc.num0.mid = mean(inc.num0),
+  inc.num.lo = lo(inc.num), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num0.hi = hi(inc.num0)
+),
+by = .(acat, mixing)
+]
+rnrtot <- merge(rnrtot, rnrtoti, by = c("acat", "mixing"))
+rnrtot[, iso3 := "TOTAL"]
+
+## total total
+tottot <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)), by = .(mixing, replicate)]
+tottot <- tottot[, .(
+  inc.num.mid = mean(inc.num), inc.num0.mid = mean(inc.num0),
+  inc.num.lo = lo(inc.num), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num0.hi = hi(inc.num0)
+), by = mixing]
+tottot[, inc.txt := fmtb(as.integer(inc.num.mid), as.integer(inc.num.lo), as.integer(inc.num.hi))]
+tottot[, inc0.txt := fmtb(as.integer(inc.num0.mid), as.integer(inc.num0.lo), as.integer(inc.num0.hi))]
+
+## slowon SA
+if (slowon) {
+  cat("Writing basecase tottot!\n")
+  fwrite(tottot, file = here("outdata/tottot.csv"))
+} else {
+  cat("Calculating & writing slowon SA tottot!\n")
+  fn <- here("outdata/tottot.csv")
+  if(!file.exists(fn)){
+    cat("Need to run basecase first if you want to save comparative SA results!\n")
+  } else {
+    tottot0 <- fread(fn)
+    tottot <- merge(tottot,
+      tottot0[, .(mixing, bc.inc.num.mid = inc.num.mid, bc.inc.num0.mid = inc.num0.mid)],
+      by = "mixing"
+    )
+    tottot[, c("pcbc", "pcbc0") := .(1e2 * inc.num.mid / bc.inc.num.mid,
+                                     1e2 * inc.num0.mid / bc.inc.num0.mid)]
+    fwrite(tottot, file = here("outdata/tottot.SA.csv"))
+  }
+}
+
 
 ## by sex and age
-rnrtoti2 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,acat,mixing,replicate)]
-rnrtoti2 <- rnrtoti2[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
-                      inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
-                      inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
-                   by=.(sex,acat,mixing)]
-rnrtot2 <- merge(rnrtot2,rnrtoti2,by=c('sex','acat','mixing'))
-rnrtot2[,iso3:='TOTAL']
+rnrtoti2 <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)),
+  by = .(sex, acat, mixing, replicate)
+]
+rnrtoti2 <- rnrtoti2[, .(
+  inc.num.mid = mean(inc.num), inc.num0.mid = mean(inc.num0),
+  inc.num.lo = lo(inc.num), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num0.hi = hi(inc.num0)
+),
+by = .(sex, acat, mixing)
+]
+rnrtot2 <- merge(rnrtot2, rnrtoti2, by = c("sex", "acat", "mixing"))
+rnrtot2[, iso3 := "TOTAL"]
+
 
 ## by sex only
-rnrtoti3 <- rnr[,.(inc.num0=sum(inc.num0),inc.num=sum(inc.num)),by=.(sex,mixing,replicate)]
-rnrtoti3 <- rnrtoti3[,.(inc.num.mid=mean(inc.num),inc.num0.mid=mean(inc.num0),
-                        inc.num.lo=lo(inc.num),inc.num0.lo=lo(inc.num0),
-                        inc.num.hi=hi(inc.num),inc.num0.hi=hi(inc.num0)),
-                     by=.(sex,mixing)]
-
+rnrtoti3 <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)), by = .(sex, mixing, replicate)]
+rnrtoti3 <- rnrtoti3[, .(
+  inc.num.mid = mean(inc.num), inc.num0.mid = mean(inc.num0),
+  inc.num.lo = lo(inc.num), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num0.hi = hi(inc.num0)
+),
+by = .(sex, mixing)
+]
 
 ## for getting levels correct
-lvls <- rnr[,unique(iso3)]
-lvls <- lvls[lvls!='TOTAL']
+lvls <- rnr[, unique(iso3)]
+lvls <- lvls[lvls != "TOTAL"]
 lvls <- sort(as.character(lvls))
-lvls <- c(lvls,'TOTAL')
+lvls <- c(lvls, "TOTAL")
 
 
 (tnmz <- names(rnrtot))
-smy <- rbind(rnrss[,..tnmz],rnrtot)
-smy$iso3 <- factor(smy$iso3,levels=lvls,ordered = TRUE)
+smy <- rbind(rnrss[, ..tnmz], rnrtot)
+smy$iso3 <- factor(smy$iso3, levels = lvls, ordered = TRUE)
 
-smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi)]
-smy[,inc.num0.fmt:=fmtb(inc.num0.mid,inc.num0.lo,inc.num0.hi)]
-smy[,inc.num.fmt:=fmtb(inc.num.mid,inc.num.lo,inc.num.hi)]
-smy[,.(iso3,acat,LTBI.fmt,inc.num0.fmt,inc.num.fmt)]
-smys <- smy[,.(iso3,mixing,acat,LTBI.fmt,
-               inc.num0.fmt,inc.num.fmt,
-              LTBI.mid,LTBI.lo,LTBI.hi,
-              inc.num0.mid,inc.num0.lo,inc.num0.hi,
-              inc.num.mid,inc.num.lo,inc.num.hi)]
 
-print(smy[iso3=='TOTAL' & mixing=='assortative',.(sum(inc.num0.mid)/1e6,sum(inc.num.mid)/1e6)])
+smy[, LTBI.fmt := fmtb(LTBI.mid, LTBI.lo, LTBI.hi)]
+smy[, inc.num0.fmt := fmtb(inc.num0.mid, inc.num0.lo, inc.num0.hi)]
+smy[, inc.num.fmt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+smy[, .(iso3, acat, LTBI.fmt, inc.num0.fmt, inc.num.fmt)]
+smys <- smy[, .(
+  iso3, mixing, acat, LTBI.fmt,
+  inc.num0.fmt, inc.num.fmt,
+  LTBI.mid, LTBI.lo, LTBI.hi,
+  inc.num0.mid, inc.num0.lo, inc.num0.hi,
+  inc.num.mid, inc.num.lo, inc.num.hi
+)]
 
-smy <- merge(smy,NR[sex=='B'],by=c('iso3','acat'),all.x=TRUE,all.y = FALSE)
-smy[,CDR0:=1e2*notified/inc.num0.mid]
-smy[,CDR:=1e2*notified/inc.num.mid]
+print(smy[
+  iso3 == "TOTAL" & mixing == "assortative",
+  .(sum(inc.num0.mid) / 1e6, sum(inc.num.mid) / 1e6)
+])
 
-(tmp <- smy[!is.na(CDR),.(iso3,mixing,acat,CDR0,CDR)][order(mixing)])
 
-fwrite(tmp,file=gh('outdata/CDR.csv'))
-fwrite(smy,file=gh('outdata/smy.csv'))
+smy <- merge(smy, NR[sex == "B"], by = c("iso3", "acat"), all.x = TRUE, all.y = FALSE)
+smy[, CDR0 := 1e2 * notified / inc.num0.mid]
+smy[, CDR := 1e2 * notified / inc.num.mid]
+
+
+(tmp <- smy[!is.na(CDR), .(iso3, mixing, acat, CDR0, CDR)][order(mixing)])
+
+if (slowon) {
+  fwrite(tmp, file = gh("outdata/CDR.csv"))
+  fwrite(smy, file = gh("outdata/smy.csv"))
+}
 
 ## CDR stats for text
-cdry <- tmp[mixing=='assortative' & acat=='10-14']
+cdry <- tmp[mixing == "assortative" & acat == "10-14"]
 cdry <- cdry[order(CDR)]
 
-fwrite(cdry,file=gh('outdata/cdry.csv'))
+if (slowon) {
+  fwrite(cdry, file = gh("outdata/cdry.csv"))
+}
 
-cdro <- tmp[mixing=='assortative' & acat=='15-19']
+cdro <- tmp[mixing == "assortative" & acat == "15-19"]
 cdro <- cdro[order(CDR)]
 
-fwrite(cdro,file=gh('outdata/cdro.csv'))
-
+if (slowon) {
+  fwrite(cdro, file = gh("outdata/cdro.csv"))
+}
 
 ## reformat
-smy[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi )]
-smy[,LTBI1.fmt:=fmtb(LTBI1.mid,LTBI1.lo,LTBI1.hi )]
-smy[,LTBI2.fmt:=fmtb(LTBI2.mid,LTBI2.lo,LTBI2.hi )]
+smy[, LTBI.fmt := fmtb(LTBI.mid, LTBI.lo, LTBI.hi)]
+smy[, LTBI1.fmt := fmtb(LTBI1.mid, LTBI1.lo, LTBI1.hi)]
+smy[, LTBI2.fmt := fmtb(LTBI2.mid, LTBI2.lo, LTBI2.hi)]
+
 
 ## LTBI output by country
-out.ltbi <- dcast(smy[mixing=='assortative'],
-                  iso3~acat,
-                  value.var = c('LTBI.fmt','LTBI1.fmt','LTBI2.fmt'))
-out.ltbi$iso3 <- factor(out.ltbi$iso3,levels=lvls,ordered = TRUE)
-setkey(out.ltbi,iso3)
+out.ltbi <- dcast(smy[mixing == "assortative"],
+  iso3 ~ acat,
+  value.var = c("LTBI.fmt", "LTBI1.fmt", "LTBI2.fmt")
+)
+out.ltbi$iso3 <- factor(out.ltbi$iso3, levels = lvls, ordered = TRUE)
+setkey(out.ltbi, iso3)
 setcolorder(out.ltbi,c("iso3","LTBI.fmt_10-14","LTBI2.fmt_10-14","LTBI1.fmt_10-14",
-                                     "LTBI.fmt_15-19","LTBI2.fmt_15-19","LTBI1.fmt_15-19"))
+                       "LTBI.fmt_15-19","LTBI2.fmt_15-19","LTBI1.fmt_15-19"))
 
-fwrite(out.ltbi,file=gh('outdata/out.ltbi.csv'))
-
+if (slowon) {
+  fwrite(out.ltbi, file = gh("outdata/out.ltbi.csv"))
+}
 
 ## LTBI by sex
 out.ltbi.sex <- copy(rnrtot2)
-out.ltbi.sex[,LTBI.fmt:=fmtb(LTBI.mid,LTBI.lo,LTBI.hi )]
-out.ltbi.sex[,LTBI1.fmt:=fmtb(LTBI1.mid,LTBI1.lo,LTBI1.hi )]
-out.ltbi.sex[,LTBI2.fmt:=fmtb(LTBI2.mid,LTBI2.lo,LTBI2.hi )]
-out.ltbi.sex <- out.ltbi.sex[,.(sex,acat,mixing,LTBI1.fmt,LTBI2.fmt,LTBI.fmt)]
-setkey(out.ltbi.sex,mixing,acat,sex)
+out.ltbi.sex[, LTBI.fmt := fmtb(LTBI.mid, LTBI.lo, LTBI.hi)]
+out.ltbi.sex[, LTBI1.fmt := fmtb(LTBI1.mid, LTBI1.lo, LTBI1.hi)]
+out.ltbi.sex[, LTBI2.fmt := fmtb(LTBI2.mid, LTBI2.lo, LTBI2.hi)]
+out.ltbi.sex <- out.ltbi.sex[, .(sex, acat, mixing, LTBI1.fmt, LTBI2.fmt, LTBI.fmt)]
+setkey(out.ltbi.sex, mixing, acat, sex)
 
-fwrite(out.ltbi.sex,file=here('outdata/out.ltbi.sex.csv'))
+if (slowon) {
+  fwrite(out.ltbi.sex, file = here("outdata/out.ltbi.sex.csv"))
+}
 
 ## incidence etc by country
-out.inc <- smy[,.(iso3,acat,mixing,inc.num.fmt,inc.num0.fmt,notified,CDR,CDR0)]
-out.inc <- melt(out.inc,id=c('iso3','acat','mixing'))
-out.inc[,RF:=ifelse(grepl('0',variable),'Without risk factors','With risk factors')]
-out.inc[,variable:=gsub('0','',variable)]
-out.inc <- dcast(out.inc,iso3+mixing+RF ~ variable + acat)
-out.inc$iso3 <- factor(out.inc$iso3,levels=lvls,ordered = TRUE)
-setkey(out.inc,iso3,mixing,RF)
-setcolorder(out.inc,c("iso3","mixing","RF",
-                      "inc.num.fmt_10-14","notified_10-14","CDR_10-14",
-                      "inc.num.fmt_15-19","notified_15-19","CDR_15-19"   ))
+out.inc <- smy[, .(iso3, acat, mixing, inc.num.fmt, inc.num0.fmt, notified, CDR, CDR0)]
+out.inc <- melt(out.inc, id = c("iso3", "acat", "mixing"))
+out.inc[, RF := ifelse(grepl("0", variable), "Without risk factors", "With risk factors")]
+out.inc[, variable := gsub("0", "", variable)]
+out.inc <- dcast(out.inc, iso3 + mixing + RF ~ variable + acat)
+out.inc$iso3 <- factor(out.inc$iso3, levels = lvls, ordered = TRUE)
+setkey(out.inc, iso3, mixing, RF)
+setcolorder(out.inc, c(
+  "iso3", "mixing", "RF",
+  "inc.num.fmt_10-14", "notified_10-14", "CDR_10-14",
+  "inc.num.fmt_15-19", "notified_15-19", "CDR_15-19"
+))
 
-fwrite(out.inc[!is.na(`notified_10-14`)],file=gh('outdata/out.inc.csv'))
-
-
+if (slowon) {
+  fwrite(out.inc[!is.na(`notified_10-14`)], file = gh("outdata/out.inc.csv"))
+}
 
 ## reformat for plotting
-smy2 <- smy[,.(iso3,mixing,acat,notified,
-               inc.num0.mid,inc.num0.lo,inc.num0.hi,
-               inc.num.mid,inc.num.lo,inc.num.hi
-               )]
-smy2 <- melt(smy2,id=c('iso3','acat','notified','mixing'))
-smy2[,method:='with risk factors']
-smy2[grepl('0',variable),method:='without risk factors']
-smy2[,variable:=gsub('0','',variable)]
-smy2 <- dcast(smy2,iso3+acat+notified+method + mixing ~ variable,value.var = 'value')
-smy2 <- merge(smy2,ckey,by = 'iso3',all.x=TRUE)
-
+smy2 <- smy[, .(
+  iso3, mixing, acat, notified,
+  inc.num0.mid, inc.num0.lo, inc.num0.hi,
+  inc.num.mid, inc.num.lo, inc.num.hi
+)]
+smy2 <- melt(smy2, id = c("iso3", "acat", "notified", "mixing"))
+smy2[, method := "with risk factors"]
+smy2[grepl("0", variable), method := "without risk factors"]
+smy2[, variable := gsub("0", "", variable)]
+smy2 <- dcast(smy2, iso3 + acat + notified + method + mixing ~ variable, value.var = "value")
+smy2 <- merge(smy2, ckey, by = "iso3", all.x = TRUE)
 
 ## plot
-m <- 1e6*0.75
+m <- 1e6 * 0.75
 plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
               aes(x=notified,y=inc.num.mid,
                   ymin=inc.num.lo,ymax=inc.num.hi,
@@ -374,17 +484,18 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
   theme_light()+theme(legend.position = 'top')
 plt
 
-
-ggsave(plt,file=here('plots/IvN.pdf'),h=7,w=14)
-ggsave(plt,file=here('plots/IvN.png'),h=7,w=14)
+if (slowon) {
+  ggsave(plt, file = here("plots/IvN.pdf"), h = 7, w = 14)
+  ggsave(plt, file = here("plots/IvN.png"), h = 7, w = 14)
+}
 
 
 ## barplot version
-smy2[,fmeth:=paste0(method,', ',mixing)]
-smy2[is.na(newcountry),newcountry:='TOTAL']
+smy2[, fmeth := paste0(method, ", ", mixing)]
+smy2[is.na(newcountry), newcountry := "TOTAL"]
 cnys <- unique(smy2$newcountry)
-cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
-smy2$newcountry <- factor(smy2$newcountry,levels=cnys,ordered = TRUE)
+cnys <- c(sort(cnys[cnys != "TOTAL"]), "TOTAL")
+smy2$newcountry <- factor(smy2$newcountry, levels = cnys, ordered = TRUE)
 dog <- position_dodge()
 
 plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth))+
@@ -399,17 +510,20 @@ plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth))+
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
 plt
 
-ggsave(plt,file=here('plots/Ibar.pdf'),h=9,w=12)
-ggsave(plt,file=here('plots/Ibar.png'),h=9,w=12)
+if (slowon) {
+  ggsave(plt, file = here("plots/Ibar.pdf"), h = 9, w = 12)
+  ggsave(plt, file = here("plots/Ibar.png"), h = 9, w = 12)
+}
 
 
 ## per capita version of Ibar
-popss <- unique(IRR[,.(iso3,sex,acat,pop)])
-pops <- popss[,.(pop=sum(pop)),by=.(iso3,acat)]
-popst <- pops[,.(pop=sum(pop)),by=acat]
-popst[,iso3:='TOTAL']
-pops <- rbind(pops,popst)
-smy3 <- merge(smy2,pops,by=c('iso3','acat'),all.x=TRUE)
+popss <- unique(IRR[, .(iso3, sex, acat, pop)])
+pops <- popss[, .(pop = sum(pop)), by = .(iso3, acat)]
+popst <- pops[, .(pop = sum(pop)), by = acat]
+popst[, iso3 := "TOTAL"]
+pops <- rbind(pops, popst)
+smy3 <- merge(smy2, pops, by = c("iso3", "acat"), all.x = TRUE)
+
 
 plt <- ggplot(smy3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
   geom_bar(stat='identity',position = dog)+
@@ -423,28 +537,31 @@ plt <- ggplot(smy3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
 plt
 
-ggsave(plt,file=here('plots/IbarPC.pdf'),h=9,w=12)
-ggsave(plt,file=here('plots/IbarPC.png'),h=9,w=12)
-
-
+if (slowon) {
+  ggsave(plt, file = here("plots/IbarPC.pdf"), h = 9, w = 12)
+  ggsave(plt, file = here("plots/IbarPC.png"), h = 9, w = 12)
+}
 
 ## === sex-based versions for plotting
 (tnmz <- names(rnrtot2))
-smys <- rbind(rnrss2[,..tnmz],rnrtot2)
-smys <- merge(smys,NR[sex!='B'],by=c('iso3','sex','acat'),all.x=TRUE,all.y = FALSE)
-smys$iso3 <- factor(smys$iso3,levels=lvls,ordered = TRUE)
-smys2 <- smys[,.(iso3,mixing,sex,acat,notified,
-                 inc.num0.mid,inc.num0.lo,inc.num0.hi,
-                 inc.num.mid,inc.num.lo,inc.num.hi
-                 )]
+smys <- rbind(rnrss2[, ..tnmz], rnrtot2)
+smys <- merge(smys, NR[sex != "B"], by = c("iso3", "sex", "acat"), all.x = TRUE, all.y = FALSE)
+smys$iso3 <- factor(smys$iso3, levels = lvls, ordered = TRUE)
+smys2 <- smys[, .(
+  iso3, mixing, sex, acat, notified,
+  inc.num0.mid, inc.num0.lo, inc.num0.hi,
+  inc.num.mid, inc.num.lo, inc.num.hi
+)]
 
-smys2 <- melt(smys2,id=c('iso3','sex','acat','notified','mixing'))
-smys2[,method:='with risk factors']
-smys2[grepl('0',variable),method:='without risk factors']
-smys2[,variable:=gsub('0','',variable)]
-smys2 <- dcast(smys2,iso3+sex+acat+notified+method + mixing ~ variable,value.var = 'value')
-smys2 <- merge(smys2,ckey,by = 'iso3',all.x=TRUE)
-smys2[iso3=='TOTAL',newcountry:='TOTAL']
+
+smys2 <- melt(smys2, id = c("iso3", "sex", "acat", "notified", "mixing"))
+smys2[, method := "with risk factors"]
+smys2[grepl("0", variable), method := "without risk factors"]
+smys2[, variable := gsub("0", "", variable)]
+smys2 <- dcast(smys2, iso3 + sex + acat + notified + method + mixing ~ variable, value.var = "value")
+smys2 <- merge(smys2, ckey, by = "iso3", all.x = TRUE)
+smys2[iso3 == "TOTAL", newcountry := "TOTAL"]
+
 
 ## plot
 m <- 3.1e5
@@ -472,17 +589,18 @@ plt <- ggplot(smys2[method=='with risk factors' & mixing=='assortative'],
   theme_light()+theme(legend.position = 'top')
 plt
 
-
-ggsave(plt,file=here('plots/IvNsex.pdf'),h=14,w=14)
-ggsave(plt,file=here('plots/IvNsex.png'),h=14,w=14)
-
+if (slowon) {
+  ggsave(plt, file = here("plots/IvNsex.pdf"), h = 14, w = 14)
+  ggsave(plt, file = here("plots/IvNsex.png"), h = 14, w = 14)
+}
 
 ## barplot version
-smys2[,fmeth:=paste0(method,', ',mixing)]
+smys2[, fmeth := paste0(method, ", ", mixing)]
 cnys <- unique(smys2$newcountry)
-cnys <- c(sort(cnys[cnys!='TOTAL']),'TOTAL')
-smys2$newcountry <- factor(smys2$newcountry,levels=cnys,ordered = TRUE)
-smys2[,ymx:=pmax(inc.num.mid,notified,na.rm=TRUE),by=.(iso3,acat)] #y-max
+cnys <- c(sort(cnys[cnys != "TOTAL"]), "TOTAL")
+smys2$newcountry <- factor(smys2$newcountry, levels = cnys, ordered = TRUE)
+smys2[, ymx := pmax(inc.num.mid, notified, na.rm = TRUE), by = .(iso3, acat)] # y-max
+
 
 
 dog <- position_dodge()
@@ -508,19 +626,22 @@ GA <- annotate_figure(GA,
                       left = textGrob("Tuberculosis incidence 2019",
                                       rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
                       bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
+GA
 
-ggsave(GA,file=here('plots/Ibarsex.pdf'),h=12,w=12)
-ggsave(GA,file=here('plots/Ibarsex.png'),h=12,w=12)
-
-
+if (slowon) {
+  ggsave(GA, file = here("plots/Ibarsex.pdf"), h = 12, w = 12)
+  ggsave(GA, file = here("plots/Ibarsex.png"), h = 12, w = 12)
+}
 
 ## per capita version of Ibar
-popss <- unique(IRR[,.(iso3,sex,acat,pop)])
-popsst <- popss[,.(pop=sum(pop)),by=.(sex,acat)]
-popsst[,iso3:='TOTAL']
-popss <- rbind(popss,popsst)
-smys3 <- merge(smys2,popss,by=c('iso3','sex','acat'),all.x=TRUE)
-smys3[,ymx:=pmax(1e5*inc.num.mid/pop,1e5*notified/pop,na.rm=TRUE),by=.(iso3,acat)] #y-max
+popss <- unique(IRR[, .(iso3, sex, acat, pop)])
+popsst <- popss[, .(pop = sum(pop)), by = .(sex, acat)]
+popsst[, iso3 := "TOTAL"]
+popss <- rbind(popss, popsst)
+smys3 <- merge(smys2, popss, by = c("iso3", "sex", "acat"), all.x = TRUE)
+smys3[, ymx := pmax(1e5 * inc.num.mid / pop, 1e5 * notified / pop, na.rm = TRUE),
+  by = .(iso3, acat)
+] # y-max
 
 
 dog <- position_dodge()
@@ -550,41 +671,48 @@ GA <- annotate_figure(GA,
                       left = textGrob("Tuberculosis incidence 2019 (per 100,000)",
                                       rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
                       bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
+GA
 
-ggsave(GA,file=here('plots/IbarPCsex.pdf'),h=12,w=12)
-ggsave(GA,file=here('plots/IbarPCsex.png'),h=12,w=12)
+if (slowon) {
+  ggsave(GA, file = here("plots/IbarPCsex.pdf"), h = 12, w = 12)
+  ggsave(GA, file = here("plots/IbarPCsex.png"), h = 12, w = 12)
+}
 
 
 ## --- MF plot -------
-MF <- rnr[,.(inc0,inc),
-          by=.(iso3,sex,acat,mixing,replicate)]
-MF <- melt(MF,id=c('iso3','sex','acat','mixing','replicate'))
-MF[,variable:=ifelse(grepl(0,variable),'no risk factors','with risk factors')]
-MF <- dcast(data=MF,iso3+mixing+variable+replicate+acat ~ sex)
-MF[,mf:=M/F]
-MF <- MF[,.(mf=mean(mf),mf.lo=lo(mf),mf.hi=hi(mf)),by=.(iso3,mixing,variable,acat)]
+MF <- rnr[, .(inc0, inc),
+  by = .(iso3, sex, acat, mixing, replicate)
+]
+MF <- melt(MF, id = c("iso3", "sex", "acat", "mixing", "replicate"))
+MF[, variable := ifelse(grepl(0, variable), "no risk factors", "with risk factors")]
+MF <- dcast(data = MF, iso3 + mixing + variable + replicate + acat ~ sex)
+MF[, mf := M / F]
+MF <- MF[, .(mf = mean(mf), mf.lo = lo(mf), mf.hi = hi(mf)), by = .(iso3, mixing, variable, acat)]
 ## MF <- MF[variable!='no risk factors']
-tmp <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='random']
+tmp <- MF[acat == "10-14" & variable == "with risk factors" & mixing == "random"]
 der <- order(tmp$mf)
-lvls <- unique(tmp[der,iso3])
-MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
-MF[,age:=acat]
-MF$mixing <- factor(MF$mixing,levels=rev(c('assortative','random')),ordered=TRUE)
+lvls <- unique(tmp[der, iso3])
+MF$iso3 <- factor(MF$iso3, levels = lvls, ordered = TRUE)
+MF[, age := acat]
+MF$mixing <- factor(MF$mixing, levels = rev(c("assortative", "random")), ordered = TRUE)
+
 ## data for text
-TXT <- dcast(data=MF,iso3 ~ mixing + variable + acat,value.var='mf')
-TXT[,txtr:=`assortative_with risk factors_15-19`/`assortative_with risk factors_10-14`]
-TXT[,txt:=round(txtr,2)]
-TXT[,c('mf','mf.lo','mf.hi'):=1.7]
-TXT[,variable:='with risk factors']
-TXT[,sex:='M']
-TXT[,acat:='10-14']
-TXT[,mixing:='assortative']
-TXT[,age:=acat]
+TXT <- dcast(data = MF, iso3 ~ mixing + variable + acat, value.var = "mf")
+TXT[, txtr := `assortative_with risk factors_15-19` / `assortative_with risk factors_10-14`]
+TXT[, txt := round(txtr, 2)]
+TXT[, c("mf", "mf.lo", "mf.hi") := 1.7]
+TXT[, variable := "with risk factors"]
+TXT[, sex := "M"]
+TXT[, acat := "10-14"]
+TXT[, mixing := "assortative"]
+TXT[, age := acat]
+
 
 ## keep only relevant data
-tmp <- MF[!(acat=='10-14' & mixing=='assortative')]
-tmp <- tmp[!(acat=='15-19' & mixing=='assortative' & variable=='no risk factors')]
-tmp <- tmp[!(mixing=='random' & variable=='no risk factors')]
+tmp <- MF[!(acat == "10-14" & mixing == "assortative")]
+tmp <- tmp[!(acat == "15-19" & mixing == "assortative" & variable == "no risk factors")]
+tmp <- tmp[!(mixing == "random" & variable == "no risk factors")]
+min(tmp$mf.lo)
 
 ## plot
 pd <- position_dodge(0.5)
@@ -599,189 +727,242 @@ GPP <- ggplot(tmp,
   geom_hline(yintercept = 1,col='grey',lty=2) +
   geom_text(data=TXT,aes(label=txt),show.legend=FALSE,col='black')+
   annotate('text',y=1.7,x=31.5,label='Older/Younger\nMF ratios',size=3)+
-  ylim(c(0.85,1.72))
+  ylim(c(0.75,1.72))
 GPP
 
-ggsave(GPP,file=here('plots/MFcountryFULL.png'),h=7,w=7)
-ggsave(GPP,file=here('plots/MFcountryFULL.pdf'),h=7,w=7)
-
+if (slowon) {
+  ggsave(GPP, file = here("plots/MFcountryFULL.png"), h = 7, w = 7)
+  ggsave(GPP, file = here("plots/MFcountryFULL.pdf"), h = 7, w = 7)
+}
 
 ## for text
-mfmed <- MF[acat=='10-14' & variable=='with risk factors' & mixing=='assortative']
-cat(mfmed[,median(mf)],file=gh('outdata/mf.median.y.txt'))
+mfmed <- MF[acat == "10-14" & variable == "with risk factors" & mixing == "assortative"]
+if (slowon) {
+  cat(mfmed[, median(mf)], file = gh("outdata/mf.median.y.txt"))
+}
 
-## For the 15-19 year age group, 
+## For the 15-19 year age group,
 ## the median factor increase in male-to-female ratio due to sex-assortative mixing in this group was Z.
-mfmed <- MF[acat=='15-19' & variable=='with risk factors']
-mfmed <- dcast(mfmed,iso3 ~ mixing,value.var='mf')
-cat(mfmed[,median(assortative/random)],file=gh('outdata/mf.median.mix.o.txt'))
+mfmed <- MF[acat == "15-19" & variable == "with risk factors"]
+mfmed <- dcast(mfmed, iso3 ~ mixing, value.var = "mf")
+if (slowon) {
+  cat(mfmed[, median(assortative / random)], file = gh("outdata/mf.median.mix.o.txt"))
+}
 
-## The median increase in male-to-female ratio between the two age groups was Y. 
-mfmed <- MF[variable=='with risk factors' & mixing=='assortative']
-mfmed <- dcast(mfmed,iso3~acat,value.var='mf')
-cat(mfmed[,median(`15-19`/`10-14`)],file=gh('outdata/mf.median.age.txt'))
+## The median increase in male-to-female ratio between the two age groups was Y.
+mfmed <- MF[variable == "with risk factors" & mixing == "assortative"]
+mfmed <- dcast(mfmed, iso3 ~ acat, value.var = "mf")
+if (slowon) {
+  cat(mfmed[, median(`15-19` / `10-14`)], file = gh("outdata/mf.median.age.txt"))
+}
 
 ## percentages
 ## dQ/Q=dlog(A/B) = dA/A + dB/B
-PC <- rnrss[mixing=='assortative',
-            .(iso3,acat,inc.num.mid,dAoA=abs(inc.num.lo-inc.num.hi)/inc.num.mid/3.92)]
-pct <- rnrtot[mixing=='assortative',
-              .(acat,tot=inc.num.mid,dBoB=abs(inc.num.lo-inc.num.hi)/inc.num.mid/3.92)]
-PC <- merge(PC,pct,by=c('acat'),all.x=TRUE,all.y=FALSE)
-PC[,pc:=1e2*inc.num.mid/tot]
-PC[,pc.sd:=pc*sqrt(dAoA^2+dBoB^2)]
-PC[,pc.lo:=pc-1.96*pc.sd]
-PC[,pc.hi:=pc+1.96*pc.sd]
-PC[,percentage:=fmt1(pc,pc.lo,pc.hi)]
-youngpc <- PC[acat=='10-14'][order(pc,decreasing=TRUE),.(iso3,percentage)]
-oldpc <- PC[acat=='15-19'][order(pc,decreasing=TRUE),.(iso3,percentage)]
+PC <- rnrss[
+  mixing == "assortative",
+  .(iso3, acat, inc.num.mid, dAoA = abs(inc.num.lo - inc.num.hi) / inc.num.mid / 3.92)
+]
+pct <- rnrtot[
+  mixing == "assortative",
+  .(acat, tot = inc.num.mid, dBoB = abs(inc.num.lo - inc.num.hi) / inc.num.mid / 3.92)
+]
+PC <- merge(PC, pct, by = c("acat"), all.x = TRUE, all.y = FALSE)
+PC[, pc := 1e2 * inc.num.mid / tot]
+PC[, pc.sd := pc * sqrt(dAoA^2 + dBoB^2)]
+PC[, pc.lo := pc - 1.96 * pc.sd]
+PC[, pc.hi := pc + 1.96 * pc.sd]
+PC[, percentage := fmt1(pc, pc.lo, pc.hi)]
+youngpc <- PC[acat == "10-14"][order(pc, decreasing = TRUE), .(iso3, percentage)]
+oldpc <- PC[acat == "15-19"][order(pc, decreasing = TRUE), .(iso3, percentage)]
 
-fwrite(youngpc,file=gh('outdata/PC_ranked_1014.csv'))
-fwrite(oldpc,file=gh('outdata/PC_ranked_1519.csv'))
+if (slowon) {
+  fwrite(youngpc, file = gh("outdata/PC_ranked_1014.csv"))
+  fwrite(oldpc, file = gh("outdata/PC_ranked_1519.csv"))
+}
 
 ## comparison table for totals
-II <- fread(gh('rawdata/IHME-GBD_2019_DATA-6d1c5bfb-1.csv'))
-II <- merge(II,ckey,by.x='location_name',by.y='ihme',all.x=TRUE)
-II[,isd:=(upper-lower)/3.92]
-II[,acat:=gsub(' years','',age_name)]
-II <- II[,.(ihme=sum(val),ihme.sd=ssum(isd)),by=.(iso3,newcountry,acat)]
-IIT <- II[,.(ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=acat]
-IIT2 <- IIT[,.(acat='10-19',ihme=sum(ihme),ihme.sd=ssum(ihme.sd))]
-IIT <- rbind(IIT,IIT2)
-IIT <- IIT[,.(acat,fmeth='IHME',inc.num.mid=ihme,
-              inc.num.lo=ihme-1.96*ihme.sd,
-              inc.num.hi=ihme+1.96*ihme.sd)]
+II <- fread(gh("rawdata/IHME-GBD_2019_DATA-6d1c5bfb-1.csv"))
+II <- merge(II, ckey, by.x = "location_name", by.y = "ihme", all.x = TRUE)
+II[, isd := (upper - lower) / 3.92]
+II[, acat := gsub(" years", "", age_name)]
+II <- II[, .(ihme = sum(val), ihme.sd = ssum(isd)), by = .(iso3, newcountry, acat)]
+IIT <- II[, .(ihme = sum(ihme), ihme.sd = ssum(ihme.sd)), by = acat]
+IIT2 <- IIT[, .(acat = "10-19", ihme = sum(ihme), ihme.sd = ssum(ihme.sd))]
+IIT <- rbind(IIT, IIT2)
+IIT <- IIT[, .(acat,
+  fmeth = "IHME", inc.num.mid = ihme,
+  inc.num.lo = ihme - 1.96 * ihme.sd,
+  inc.num.hi = ihme + 1.96 * ihme.sd
+)]
+
 
 ## as above but by sex
-II2 <- fread(gh('rawdata/IHME-GBD_2019_DATA-01b94590-1.csv'))
-II2 <- merge(II2,ckey,by.x='location_name',by.y='ihme',all.x=TRUE)
-II2[,isd:=(upper-lower)/3.92]
-II2[,acat:=gsub(' years','',age_name)]
-II2 <- II2[,.(ihme=sum(val),ihme.sd=ssum(isd)),by=.(iso3,newcountry,acat,sex=tolower(sex_name))]
-IIT2 <- II2[,.(ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=.(acat,sex)]
-IIT3 <- IIT2[,.(acat='10-19',ihme=sum(ihme),ihme.sd=ssum(ihme.sd)),by=sex]
-IIT2 <- rbind(IIT2,IIT3)
-IIT2 <- IIT2[,.(acat,fmeth='IHME',sex,
-                inc.num.mid=ihme,
-              inc.num.lo=ihme-1.96*ihme.sd,
-              inc.num.hi=ihme+1.96*ihme.sd)]
+II2 <- fread(gh("rawdata/IHME-GBD_2019_DATA-01b94590-1.csv"))
+II2 <- merge(II2, ckey, by.x = "location_name", by.y = "ihme", all.x = TRUE)
+II2[, isd := (upper - lower) / 3.92]
+II2[, acat := gsub(" years", "", age_name)]
+II2 <- II2[, .(ihme = sum(val), ihme.sd = ssum(isd)),
+  by = .(iso3, newcountry, acat, sex = tolower(sex_name))
+]
+IIT2 <- II2[, .(ihme = sum(ihme), ihme.sd = ssum(ihme.sd)), by = .(acat, sex)]
+IIT3 <- IIT2[, .(acat = "10-19", ihme = sum(ihme), ihme.sd = ssum(ihme.sd)), by = sex]
+IIT2 <- rbind(IIT2, IIT3)
+IIT2 <- IIT2[, .(acat,
+  fmeth = "IHME", sex,
+  inc.num.mid = ihme,
+  inc.num.lo = ihme - 1.96 * ihme.sd,
+  inc.num.hi = ihme + 1.96 * ihme.sd
+)]
+
 
 ## check vs IIT OK
-IIT2[,sum(inc.num.mid),by=acat]
+IIT2[, sum(inc.num.mid), by = acat]
 
 ## output
-IIT2[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
-fwrite(IIT2[,.(acat,sex,fmeth,txt)],file=fn <- gh('outdata/cf.ihme.sex.csv'))
+IIT2[, txt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+if (slowon) {
+  fwrite(IIT2[, .(acat, sex, fmeth, txt)], file = fn <- gh("outdata/cf.ihme.sex.csv"))
+}
 
 ## snow approach, same splits
 ## ========== active TB =======
-fn <- gh('rawdata/TB_burden_age_sex_2020-10-15.csv')
+fn <- gh("rawdata/TB_burden_age_sex_2020-10-15.csv")
 snow <- fread(fn)
-exa <- c('0-14','15plus','all')
-ado <- c('0-4','5-14','15-24')
-snow[,V:=((hi-lo)/3.92)^2]
+exa <- c("0-14", "15plus", "all")
+ado <- c("0-4", "5-14", "15-24")
+snow[, V := ((hi - lo) / 3.92)^2]
 allage <- copy(snow)
 
+
 ## sanity checks
-snow[sex!='a',]
-snow[sex!='a' & !age_group %in% exa ,sum(best)*1e-6]    #yup
+snow[sex != "a", ]
+snow[sex != "a" & !age_group %in% exa, sum(best) * 1e-6] # yup
+
 
 ## extract
-snowC <- snow[sex!='a' & age_group %in% ado[-1]  & iso3 %in% ckey$iso3,
-          .(incidence=1.0*sum(best),V=1.0*sum(V)),by=.(age_group,iso3)]
+snowC <- snow[sex != "a" & age_group %in% ado[-1] & iso3 %in% ckey$iso3,
+  .(incidence = 1.0 * sum(best), V = 1.0 * sum(V)),
+  by = .(age_group, iso3)
+]
 
 
 ## Kathryn Snow split
 ## kids
 kidf <- 0.206
-snowC[age_group %in% c('5-14'),c('incidence','V'):=.(incidence*kidf,V*kidf)]
-
+snowC[age_group %in% c("5-14"), c("incidence", "V") := .(incidence * kidf, V * kidf)]
 ## older
 adof <- (0.300 + 0.454)/2## 0.3
-snowC[age_group %in% c('15-24'),c('incidence','V'):=.(incidence*adof,V*adof)]
-
-snowC[,acat:=ifelse(age_group=='5-14','10-14','15-19')]
+snowC[age_group %in% c("15-24"), c("incidence", "V") := .(incidence * adof, V * adof)]
+snowC[, acat := ifelse(age_group == "5-14", "10-14", "15-19")]
 snowC[,c('age_group'):=NULL]
-
 ## check
-snowC[,.(sum(incidence)*1e-6),by=acat] #yup
+snowC[, .(sum(incidence) * 1e-6), by = acat] # yup
+
 
 ## make total
-snowCT <- snowC[,.(inc.num.mid=sum(incidence),V=sum(V)),by=acat]
-snowCT2 <- snowCT[,.(acat='10-19',inc.num.mid=sum(inc.num.mid),V=sum(V))]
-snowCT <- rbind(snowCT,snowCT2)
-snowCT <- snowCT[,.(acat,fmeth='Snow',inc.num.mid,
-                    inc.num.lo=inc.num.mid-1.96*sqrt(V),
-                    inc.num.hi=inc.num.mid+1.96*sqrt(V))]
+snowCT <- snowC[, .(inc.num.mid = sum(incidence), V = sum(V)), by = acat]
+snowCT2 <- snowCT[, .(acat = "10-19", inc.num.mid = sum(inc.num.mid), V = sum(V))]
+snowCT <- rbind(snowCT, snowCT2)
+snowCT <- snowCT[, .(acat,
+  fmeth = "Snow", inc.num.mid,
+  inc.num.lo = inc.num.mid - 1.96 * sqrt(V),
+  inc.num.hi = inc.num.mid + 1.96 * sqrt(V)
+)]
+
 
 
 ## ==== ours
-TCF <- smy2[newcountry=='TOTAL',.(acat,fmeth,inc.num.mid,inc.num.lo,inc.num.hi)]
-TCF2 <- TCF[,.(acat='10-19',inc=sum(inc.num.mid),inc.sdx=ssum(inc.num.hi-inc.num.lo)),by=fmeth]
-TCF <- rbind(TCF,TCF2[,.(acat,fmeth,inc.num.mid=inc,inc.num.lo=inc-inc.sdx/2,inc.num.hi=inc+inc.sdx/2)])
+TCF <- smy2[newcountry == "TOTAL", .(acat, fmeth, inc.num.mid, inc.num.lo, inc.num.hi)]
+TCF2 <- TCF[, .(acat = "10-19", inc = sum(inc.num.mid), inc.sdx = ssum(inc.num.hi - inc.num.lo)),
+  by = fmeth
+]
+TCF <- rbind(
+  TCF,
+  TCF2[, .(acat, fmeth,
+    inc.num.mid = inc,
+    inc.num.lo = inc - inc.sdx / 2,
+    inc.num.hi = inc + inc.sdx / 2
+  )]
+)
+
+
 
 ## combine
-TCF <- rbind(TCF,IIT)
-TCF <- rbind(TCF,snowCT)
+TCF <- rbind(TCF, IIT)
+TCF <- rbind(TCF, snowCT)
 
-TCF[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
-TCFe <- dcast(TCF,acat~fmeth,value.var = 'txt')
 
-acata <- c('10-14','15-19','10-19')
-TCFe$acat <- factor(TCFe$acat,levels=acata,ordered=TRUE)
-setkey(TCFe,acat)
+TCF[, txt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+TCFe <- dcast(TCF, acat ~ fmeth, value.var = "txt")
 
-setcolorder(TCFe,c('acat',
-                   'with risk factors, assortative','with risk factors, random',
-                   'without risk factors, assortative','without risk factors, random',
-                   'IHME','Snow'))
 
-fn <- gh('outdata/cftab.csv')
-fwrite(TCFe,file=fn)
+acata <- c("10-14", "15-19", "10-19")
+TCFe$acat <- factor(TCFe$acat, levels = acata, ordered = TRUE)
+setkey(TCFe, acat)
+setcolorder(TCFe, c(
+  "acat",
+  "with risk factors, assortative", "with risk factors, random",
+  "without risk factors, assortative", "without risk factors, random",
+  "IHME", "Snow"
+))
+
+if (slowon) {
+  fn <- gh("outdata/cftab.csv")
+  fwrite(TCFe, file = fn)
+}
 
 print(TCFe)
 
-## version with sex 
+## version with sex
 TWS <- copy(rnrtoti2)
 tmp <- copy(rnrtoti3)
-tmp[,acat:='10-19']
-TWS <- rbind(TWS,tmp,use.names=TRUE)
-TWS <- melt(TWS,id=c('sex','mixing','acat'))
-TWS[,meth:='with risk factors']
-TWS[grepl(0,variable),meth:='without risk factors']
-TWS[,variable:=gsub('0','',variable)]
-TWS[,fmeth:=paste0(meth,', ',mixing)]
-TWS <- dcast(data=TWS,sex+fmeth+acat ~ variable,value.var = 'value')
-TWS[,txt:=fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
-TWS <- melt(TWS[,.(sex,acat,fmeth,txt)],id=c('sex','acat','fmeth'))
-TWS <- dcast(TWS,acat+sex~fmeth,value.var = 'value')
+tmp[, acat := "10-19"]
+TWS <- rbind(TWS, tmp, use.names = TRUE)
+TWS <- melt(TWS, id = c("sex", "mixing", "acat"))
+TWS[, meth := "with risk factors"]
+TWS[grepl(0, variable), meth := "without risk factors"]
+TWS[, variable := gsub("0", "", variable)]
+TWS[, fmeth := paste0(meth, ", ", mixing)]
+TWS <- dcast(data = TWS, sex + fmeth + acat ~ variable, value.var = "value")
+TWS[, txt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+TWS <- melt(TWS[, .(sex, acat, fmeth, txt)], id = c("sex", "acat", "fmeth"))
+TWS <- dcast(TWS, acat + sex ~ fmeth, value.var = "value")
 
-TWS$acat <- factor(TWS$acat,levels=acata,ordered=TRUE)
-setkey(TWS,acat)
-
-
-setcolorder(TWS,c('acat','sex',
-                   'with risk factors, assortative','with risk factors, random',
-                   'without risk factors, assortative','without risk factors, random'))
+TWS$acat <- factor(TWS$acat, levels = acata, ordered = TRUE)
+setkey(TWS, acat)
+setcolorder(TWS, c(
+  "acat", "sex",
+  "with risk factors, assortative", "with risk factors, random",
+  "without risk factors, assortative", "without risk factors, random"
+))
 
 TWS
 
-fn <- gh('outdata/cfWS.csv')
-fwrite(TWS,file=fn)
+if (slowon) {
+  fn <- gh("outdata/cfWS.csv")
+  fwrite(TWS, file = fn)
+}
 
 
 ## country-level comparisons
 CC <- list()
-CC[[1]] <- snowC[,.(iso3,acat,method='Snow',incidence,
-                    incidence.lo=pmax(0,incidence-1.96*sqrt(V)),incidence.hi=incidence+1.96*sqrt(V))]
-CC[[2]] <- II[,.(iso3,acat,method='IHME',incidence=ihme,
-                 incidence.lo=pmax(0,ihme-1.96*ihme.sd),incidence.hi=ihme+1.96*ihme.sd)]
-CC[[3]] <- smy2[newcountry!='TOTAL',.(iso3,acat,method=fmeth,incidence=inc.num.mid,
-                           incidence.lo=inc.num.lo,incidence.hi=inc.num.hi)]
+CC[[1]] <- snowC[, .(iso3, acat,
+  method = "Snow", incidence,
+  incidence.lo = pmax(0, incidence - 1.96 * sqrt(V)), incidence.hi = incidence + 1.96 * sqrt(V)
+)]
+CC[[2]] <- II[, .(iso3, acat,
+  method = "IHME", incidence = ihme,
+  incidence.lo = pmax(0, ihme - 1.96 * ihme.sd), incidence.hi = ihme + 1.96 * ihme.sd
+)]
+CC[[3]] <- smy2[newcountry != "TOTAL", .(iso3, acat,
+  method = fmeth, incidence = inc.num.mid,
+  incidence.lo = inc.num.lo, incidence.hi = inc.num.hi
+)]
 CC <- rbindlist(CC)
-addon <- CC[method=='with risk factors, assortative',.(iso3,acat,ref=incidence)]
-CC <- merge(CC,addon,by=c('iso3','acat'),all.x=TRUE)
-CC[,iso3t:=ifelse(method=='IHME',iso3,'')]
+addon <- CC[method == "with risk factors, assortative", .(iso3, acat, ref = incidence)]
+CC <- merge(CC, addon, by = c("iso3", "acat"), all.x = TRUE)
+CC[, iso3t := ifelse(method == "IHME", iso3, "")]
+
 
 M <- 5e5
 plt <- ggplot(CC,aes(ref,incidence,ymin=incidence.lo,ymax=incidence.hi,
@@ -798,24 +979,27 @@ plt <- ggplot(CC,aes(ref,incidence,ymin=incidence.lo,ymax=incidence.hi,
   theme_light()+theme(legend.position = 'top')
 plt
 
-fac <- 2
-WW <- 10
-ggsave(plt,file=here('plots/IvE.pdf'),h=WW,w=fac*WW)
-ggsave(plt,file=here('plots/IvE.png'),h=WW,w=fac*WW)
+if (slowon) {
+  fac <- 2
+  WW <- 10
+  ggsave(plt, file = here("plots/IvE.pdf"), h = WW, w = fac * WW)
+  ggsave(plt, file = here("plots/IvE.png"), h = WW, w = fac * WW)
+}
 
 
 ## ratio by country: old to young; effect of mixing
+rats <- smy2[newcountry != "TOTAL", .(iso3, acat,
+  method = fmeth, incidence = inc.num.mid,
+  incidence.lo = inc.num.lo, incidence.hi = inc.num.hi
+)]
+rats1 <- dcast(rats, iso3 + acat ~ method, value.var = "incidence")
+rats1 <- rats1[acat == "15-19", .(iso3,
+  `with risk factors, assortative` = `with risk factors, assortative` / `without risk factors, random`,
+  `without risk factors, assortative` = `without risk factors, assortative` / `without risk factors, random`,
+  `with risk factors, random` = `with risk factors, random` / `without risk factors, random`
+)]
+ratsm <- melt(rats1, id = "iso3")
 
-rats <- smy2[newcountry!='TOTAL',.(iso3,acat,method=fmeth,incidence=inc.num.mid,
-                                      incidence.lo=inc.num.lo,incidence.hi=inc.num.hi)]
-
-rats1 <- dcast(rats,iso3+acat~method,value.var = 'incidence')
-rats1 <- rats1[acat=='15-19',.(iso3,
- `with risk factors, assortative` = `with risk factors, assortative` / `without risk factors, random`,
- `without risk factors, assortative` = `without risk factors, assortative` / `without risk factors, random`,
- `with risk factors, random` = `with risk factors, random` / `without risk factors, random`)]
-
-ratsm <- melt(rats1,id='iso3')
 
 ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
   geom_hline(yintercept = 1,col=2)+
@@ -825,13 +1009,14 @@ ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
   ylab('Ratio relative to random mixing & no risk factors')+
   theme(legend.position =  'top',legend.title = element_blank() )
 
-
-ggsave(file=here('plots/ratio_method.png'),h=5,w=7)
-
+if (slowon) {
+  ggsave(file = here("plots/ratio_method.png"), h = 5, w = 7)
+}
 
 ## age ratios
-rats2 <- dcast(rats[method=='with risk factors, assortative'],iso3~acat,value.var = 'incidence')
-rats2[,`ratio by age category`:=`15-19`/`10-14`]
+rats2 <- dcast(rats[method == "with risk factors, assortative"], iso3 ~ acat, value.var = "incidence")
+rats2[, `ratio by age category` := `15-19` / `10-14`]
+
 
 ggplot(rats2,aes(x=iso3,y=`ratio by age category`)) +
   geom_hline(yintercept = 1,col=2)+
@@ -839,43 +1024,53 @@ ggplot(rats2,aes(x=iso3,y=`ratio by age category`)) +
   geom_segment(aes(xend=iso3,y=0,yend=`ratio by age category`))+
   coord_flip()
 
-ggsave(file=here('plots/ratio_age.png'),h=5,w=5)
+if (slowon) {
+  ggsave(file = here("plots/ratio_age.png"), h = 5, w = 5)
+}
 
 ## against mean age of TB
-allage <- allage[risk_factor=='all' & sex!='a' & 
-                 !age_group %in% c('all','0-14','15plus','18plus'),
-                 .(iso3,sex,age_group,best,V)]
+allage <- allage[
+  risk_factor == "all" & sex != "a" &
+    !age_group %in% c("all", "0-14", "15plus", "18plus"),
+  .(iso3, sex, age_group, best, V)
+]
 
-allage <- allage[,.(best=sum(best)),by=.(iso3,age_group)]
-allage[,agemid:=as.numeric(gsub('(.*)-(.*)','\\1',age_group))]
-allage[,agetop:=as.numeric(gsub('(.*)-(.*)','\\2',age_group))]
-allage[is.na(agemid),agemid:=65]
-allage[is.na(agetop),agetop:=70]
-allage[,agemid:=(agemid+agetop+1)/2]
-meanage <- allage[,.(`mean age of TB`=weighted.mean(agemid,best)),by=iso3]
+allage <- allage[, .(best = sum(best)), by = .(iso3, age_group)]
+allage[, agemid := as.numeric(gsub("(.*)-(.*)", "\\1", age_group))]
+allage[, agetop := as.numeric(gsub("(.*)-(.*)", "\\2", age_group))]
+allage[is.na(agemid), agemid := 65]
+allage[is.na(agetop), agetop := 70]
+allage[, agemid := (agemid + agetop + 1) / 2]
+meanage <- allage[, .(`mean age of TB` = weighted.mean(agemid, best)), by = iso3]
 
-rats2 <- merge(rats2,meanage,by='iso3',all.x = TRUE,all.y=FALSE)
+
+rats2 <- merge(rats2, meanage, by = "iso3", all.x = TRUE, all.y = FALSE)
+
 
 ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
   ## geom_smooth(method = 'lm')+
   geom_point(size=2)+
   geom_text_repel()
 
+if (slowon) {
+  ggsave(file = here("plots/ratio_age_scatter.png"), h = 5, w = 5)
+}
 
-ggsave(file=here('plots/ratio_age_scatter.png'),h=5,w=5)
+popl <- unique(IRR[, .(iso3, sex, acat, pop)])
+popl <- popl[, .(pop = sum(pop)), by = .(iso3, acat)]
+nrts <- merge(rats[method == "with risk factors, assortative", .(iso3, acat, incidence)],
+  popl,
+  by = c("iso3", "acat")
+)
+nrts[, pci := 1e5 * incidence / pop]
 
-popl <- unique(IRR[,.(iso3,sex,acat,pop)])
-popl <- popl[,.(pop=sum(pop)),by=.(iso3,acat)]
-nrts <- merge(rats[method=='with risk factors, assortative',.(iso3,acat,incidence)],
-              popl,by=c('iso3','acat'))
 
-nrts[,pci:=1e5*incidence/pop]
+rrdata <- fread(gh("LTBI/data/RR.csv"))
 
-rrdata <- fread(gh('LTBI/data/RR.csv'))
+nrts2 <- dcast(nrts, iso3 ~ acat, value.var = "pci")
+nrts2[, pciratio := `15-19` / `10-14`]
+nrts2 <- merge(nrts2, rrdata, by = "iso3")
 
-nrts2 <- dcast(nrts,iso3~acat,value.var = 'pci')
-nrts2[,pciratio:=`15-19`/`10-14`]
-nrts2 <- merge(nrts2,rrdata,by='iso3')
 
 ggplot(nrts2,aes(rr,pciratio,label=iso3))+
   geom_point(size=2)+
@@ -885,31 +1080,41 @@ ggplot(nrts2,aes(rr,pciratio,label=iso3))+
   theme_classic()+ggpubr::grids()+
   geom_abline(slope=1,intercept=0,col=2)
 
-
-ggsave(file=here('plots/ratio_pcivRR_scatter.png'),h=7,w=7)
-
-
+if (slowon) {
+  ggsave(file = here("plots/ratio_pcivRR_scatter.png"), h = 7, w = 7)
+}
 
 ## HIV/TB by region
-load(here('rawdata/whokey.Rdata'))
-PAF <- fread(here('outdata/PAF.csv'))
-PAF <- PAF[,.(iso3,yng=`hiv.PAF_10-14`,old=`hiv.PAF_15-19`)]
-getnum <- function(X) #get mid from string as num
-  as.numeric(unlist(lapply(X,function(x) strsplit(x,split=' ')[[1]][1])))
-PAF[,midy:=getnum(yng)]
-PAF[,mido:=getnum(old)]
-PAF <- melt(PAF[,.(iso3,`10-14`=midy/1e2,`15-19`=mido/1e2)],id='iso3')
-PAF <- PAF[,.(iso3,acat=variable,phiv=value)]
-nhiv <- merge(smy2[method=='with risk factors' & mixing=='assortative',
-                   .(iso3,acat,inc.num.mid,inc.num.sdw=inc.num.hi-inc.num.lo)],
-              PAF,
-              by=c('iso3','acat'))
-nhiv <- merge(nhiv,whokey,by='iso3',all.x=TRUE,all.y=FALSE)
-nhiva <- nhiv[,.(hivtb=sum(inc.num.mid*phiv),hivtb.w=ssum(inc.num.sdw*phiv)),by=.(acat,g_whoregion)]
-nhiv <- nhiv[,.(hivtb=sum(inc.num.mid*phiv),hivtb.w=ssum(inc.num.sdw*phiv)),by=.(g_whoregion)]
-nhiv <- rbind(nhiva,nhiv[,.(g_whoregion,acat='10-19',hivtb,hivtb.w)])
-nhiv[,c('hivtb.lo','hivtb.hi'):=.(pmax(0,hivtb-hivtb.w/2),hivtb+hivtb.w/2)]
-nhiv[,txt:=fmtb(as.integer(hivtb), as.integer(hivtb.lo), as.integer(hivtb.hi))]
-nhiv <- nhiv[order(acat,g_whoregion)]
+load(here("rawdata/whokey.Rdata"))
+PAF <- fread(here("outdata/PAF.csv"))
+PAF <- PAF[, .(iso3, yng = `hiv.PAF_10-14`, old = `hiv.PAF_15-19`)]
+getnum <- function(X) { # get mid from string as num
+  as.numeric(unlist(lapply(X, function(x) strsplit(x, split = " ")[[1]][1])))
+}
+PAF[, midy := getnum(yng)]
+PAF[, mido := getnum(old)]
+PAF <- melt(PAF[, .(iso3, `10-14` = midy / 1e2, `15-19` = mido / 1e2)], id = "iso3")
+PAF <- PAF[, .(iso3, acat = variable, phiv = value)]
+nhiv <- merge(
+  smy2[
+    method == "with risk factors" & mixing == "assortative",
+    .(iso3, acat, inc.num.mid, inc.num.sdw = inc.num.hi - inc.num.lo)
+  ],
+  PAF,
+  by = c("iso3", "acat")
+)
+nhiv <- merge(nhiv, whokey, by = "iso3", all.x = TRUE, all.y = FALSE)
+nhiva <- nhiv[, .(hivtb = sum(inc.num.mid * phiv), hivtb.w = ssum(inc.num.sdw * phiv)),
+  by = .(acat, g_whoregion)
+]
+nhiv <- nhiv[, .(hivtb = sum(inc.num.mid * phiv), hivtb.w = ssum(inc.num.sdw * phiv)),
+  by = .(g_whoregion)
+]
+nhiv <- rbind(nhiva, nhiv[, .(g_whoregion, acat = "10-19", hivtb, hivtb.w)])
+nhiv[, c("hivtb.lo", "hivtb.hi") := .(pmax(0, hivtb - hivtb.w / 2), hivtb + hivtb.w / 2)]
+nhiv[, txt := fmtb(as.integer(hivtb), as.integer(hivtb.lo), as.integer(hivtb.hi))]
+nhiv <- nhiv[order(acat, g_whoregion)]
 
-fwrite(nhiv[,.(acat,g_whoregion,txt)],file=here('outdata/nhiv.csv'))
+if (slowon) {
+  fwrite(nhiv[, .(acat, g_whoregion, txt)], file = here("outdata/nhiv.csv"))
+}

@@ -17,12 +17,13 @@ gh <- function(x) glue(here(x))
 ssum <- function(x) sqrt(sum(x^2))
 fts <- function(x,n) format(round(x, n), nsmall = n)
 
-load(here('rawdata/ckey.Rdata'))
+load(here("rawdata/ckey.Rdata"))
 
 ## ===== BMI ===
 ## NOTE see rawdata/BMIdataprep.R
-load(here('rawdata/BMIREF.Rdata'))
-load(here('rawdata/DRA.Rdata'))
+load(here("rawdata/BMIREF.Rdata"))
+load(here("rawdata/DRA.Rdata"))
+
 
 ## https://academic.oup.com/ije/article/39/1/149/713956?login=false
 ## 13.8% per unit BMI 13.8% (95% CI 13.4−14.2)
@@ -36,11 +37,12 @@ unRR <- function(a,k,th) 1/(1-th*a)^k
 getRR <- function(A,k,theta,kref,thetaref) unRR(A,k,theta) / unRR(A,kref,thetaref)
 
 ## test:
-top <- DRA[Country=='India' & Sex=='Girls' & age==19,.(k,theta)]
-ref <- BMIREF[Sex=='Girls' & age==19,.(k=kref,theta=thetaref)]
-top[,k*theta]
-ref[,k*theta]
-getRR(alph,top$k,top$theta,ref$k,ref$theta) #test
+top <- DRA[Country == "India" & Sex == "Girls" & age == 19, .(k, theta)]
+ref <- BMIREF[Sex == "Girls" & age == 19, .(k = kref, theta = thetaref)]
+top[, k * theta]
+ref[, k * theta]
+getRR(alph, top$k, top$theta, ref$k, ref$theta) # test
+
 
 ## for uncertainty
 getRRhilosd <- function(A,A.sd,k,theta,kref,thetaref,N=1e3){
@@ -53,11 +55,11 @@ getRRhilosd <- function(A,A.sd,k,theta,kref,thetaref,N=1e3){
   HLS
 }
 
-getRRhilosd(alph,(alph.hi-alph.lo)/3.92,top$k,top$theta,ref$k,ref$theta) #test
+getRRhilosd(alph, (alph.hi - alph.lo) / 3.92, top$k, top$theta, ref$k, ref$theta) # test
 
 
 ## plot of ref and IND for 19 yo F
-png(here('plots/BMIeg.png'))
+png(here("plots/BMIeg.png"))
 curve(dgamma(x,shape=ref$k,scale=ref$theta),
       from=1,to=50,col=1,n=1e3,
       xlab='BMI',ylab='density') #check
@@ -69,88 +71,112 @@ grid()
 dev.off()
 
 ## calculate IRRs
-DRA <- merge(DRA,BMIREF,by=c('Sex','age'))
-DRA[,c('RR','RR.lo','RR.hi'):=1.0]
-DRA[,RR:=getRR(alph,k,theta,kref,thetaref)]
-HLS <- DRA[,getRRhilosd(alph,(alph.hi-alph.lo)/3.92,k,theta,kref,thetaref)]
-DRA[,c('RR.sd','RR.lo','RR.hi'):=.(HLS[,3],HLS[,2],HLS[,1])]
+DRA <- merge(DRA, BMIREF, by = c("Sex", "age"))
+DRA[, c("RR", "RR.lo", "RR.hi") := 1.0]
+DRA[, RR := getRR(alph, k, theta, kref, thetaref)]
+HLS <- DRA[, getRRhilosd(alph, (alph.hi - alph.lo) / 3.92, k, theta, kref, thetaref)]
+DRA[, c("RR.sd", "RR.lo", "RR.hi") := .(HLS[, 3], HLS[, 2], HLS[, 1])]
+
 ## check
-DRA[,any(RR.sd<0)]
-DRA[,any(RR.hi<RR.lo)]
-DRA[,any(RR.hi<RR)]
-DRA[,any(RR.lo>RR)]
+DRA[, any(RR.sd < 0)]
+DRA[, any(RR.hi < RR.lo)]
+DRA[, any(RR.hi < RR)]
+DRA[, any(RR.lo > RR)]
+
+
 ## save
-save(DRA,file=here('PAF/data/DRAgamma.Rdata'))
+save(DRA, file = here("PAF/data/DRAgamma.Rdata"))
+
 
 ## summary output for appendix
-load(file=here('PAF/data/DRAgamma.Rdata'))
+load(file = here("PAF/data/DRAgamma.Rdata"))
 
-DRAS <- DRA[age>=10,
-           .(RR=mean(RR),RR.sd=ssum(RR.sd)/sqrt(5)),
-           by=.(country=Country,sex=ifelse(Sex=='Boys','males','females'),
-                                      acat=ifelse(age<15,'10-14','15-19'))]
 
-DRAS[,RR.neat:=paste0(fts(RR,2)," (",
-                      fts(RR-1.96*RR.sd,2)," to ",
-                      fts(RR+1.96*RR.sd,2),")")]
+DRAS <- DRA[age >= 10,
+  .(RR = mean(RR), RR.sd = ssum(RR.sd) / sqrt(5)),
+  by = .(
+    country = Country, sex = ifelse(Sex == "Boys", "males", "females"),
+    acat = ifelse(age < 15, "10-14", "15-19")
+  )
+]
+DRAS[, RR.neat := paste0(
+  fts(RR, 2), " (",
+  fts(RR - 1.96 * RR.sd, 2), " to ",
+  fts(RR + 1.96 * RR.sd, 2), ")"
+)]
 
-DRAS <- dcast(data=DRAS,country ~ sex + acat,value.var='RR.neat')
-DRAS <- DRAS[!country %in% c('Zimbabwe','Cambodia','Russian Federation')] #only 30 HBC of interest
 
-fwrite(DRAS,file=here('outdata/thinness.RRs.csv'))
+DRAS <- dcast(data = DRAS, country ~ sex + acat, value.var = "RR.neat")
+DRAS <- DRAS[!country %in% c("Zimbabwe", "Cambodia", "Russian Federation")] # only 30 HBC of interest
+
+
+fwrite(DRAS, file = here("outdata/thinness.RRs.csv"))
+
 
 ## more inspection
-CFA <- merge(DRA[age>=10,.(RRn=mean(RR)),by=Country],
-             DRA[age>=10 & age <15,.(RRy=mean(RR)),by=Country],by='Country')
+CFA <- merge(DRA[age >= 10, .(RRn = mean(RR)), by = Country],
+  DRA[age >= 10 & age < 15, .(RRy = mean(RR)), by = Country],
+  by = "Country"
+)
+CFA <- merge(CFA, DRA[age >= 15, .(RRo = mean(RR)), by = Country], by = "Country")
+CFA <- DRA[age >= 10, .(RR = mean(RR)), by = .(Sex, Country)]
+CFA <- dcast(CFA, Country ~ Sex, value.var = "RR")
 
-CFA <- merge(CFA,DRA[age>=15,.(RRo=mean(RR)),by=Country],by='Country')
 
-CFA <- DRA[age>=10,.(RR=mean(RR)),by=.(Sex,Country)]
-CFA <- dcast(CFA,Country ~ Sex,value.var = 'RR')
+ggplot(CFA, aes(Boys, Girls, label = Country)) +
+  geom_point() +
+  ggrepel::geom_text_repel() +
+  geom_abline(intercept = 0, slope = 1, col = 2)
 
-ggplot(CFA,aes(Boys,Girls,label=Country))+ geom_point()+ggrepel::geom_text_repel()+geom_abline(intercept=0,slope=1,col=2)
-ggsave(here('plots/CFsex.png'),w=7,h=7)
+ggsave(here("plots/CFsex.png"), w = 7, h = 7)
 
-DRA[,bmi:=k*theta]
-CFA <- dcast(DRA[age==15],Country ~ Sex,value.var = 'bmi' )
+
+DRA[, bmi := k * theta]
+CFA <- dcast(DRA[age == 15], Country ~ Sex, value.var = "bmi")
+
 
 ## ==== build in non-BMI risk factors
-load(here('PAF/data/DRAgamma.Rdata')) #BMI data
-ART <- fread(here('rawdata/Adolescent ART Coverage for TB Modeling Study 2.csv')) #ART data
-H <- fread(here('rawdata/IHME-GBD_2019_DATA-5a125199-1.csv')) #HIV data
-load(here('rawdata/N80MF.Rdata'))                             #demographic data
+load(here("PAF/data/DRAgamma.Rdata")) # BMI data
+ART <- fread(here("rawdata/Adolescent ART Coverage for TB Modeling Study 2.csv")) # ART data
+H <- fread(here("rawdata/IHME-GBD_2019_DATA-5a125199-1.csv")) # HIV data
+load(here("rawdata/N80MF.Rdata")) # demographic data
+
 
 
 ## ====== HIV ===
 ## ART
-ART[Value=='<100',Value:='50']
-ART[Value=='<200',Value:='100']
-ART[Value=='<500',Value:='250']
-ART[,Value:=as.numeric(gsub(',','',Value))]
-ART[,sex:=substr(Sex,start=1,stop=1)]
-ART[,acat:=gsub('Age ','',Age)]
-ART <- merge(ART,ckey[,.(iso3,UN)],by.x='Country.Region',by.y='UN')
+ART[Value == "<100", Value := "50"]
+ART[Value == "<200", Value := "100"]
+ART[Value == "<500", Value := "250"]
+ART[, Value := as.numeric(gsub(",", "", Value))]
+ART[, sex := substr(Sex, start = 1, stop = 1)]
+ART[, acat := gsub("Age ", "", Age)]
+ART <- merge(ART, ckey[, .(iso3, UN)], by.x = "Country.Region", by.y = "UN")
 ## HIV
-H <- merge(H,ckey,by.x='location_name',by.y='ihme',all.x=FALSE,all.y=TRUE)
-H[,acat:=gsub(' years','',age_name)]
-H[,sex:=substr(sex_name,start=1,stop=1)]
+H <- merge(H, ckey, by.x = "location_name", by.y = "ihme", all.x = FALSE, all.y = TRUE)
+H[, acat := gsub(" years", "", age_name)]
+H[, sex := substr(sex_name, start = 1, stop = 1)]
 ## popn
-N80 <- N80[iso3 %in% ckey$iso3 & AgeGrp %in% c('10-14','15-19')]
-N80[,Year:=NULL]
-N80 <- melt(N80,id=c('iso3','AgeGrp'))
-N80[,sex:=gsub('T','B',substr(variable,start=4,stop=4))]
+N80 <- N80[iso3 %in% ckey$iso3 & AgeGrp %in% c("10-14", "15-19")]
+N80[, Year := NULL]
+N80 <- melt(N80, id = c("iso3", "AgeGrp"))
+N80[, sex := gsub("T", "B", substr(variable, start = 4, stop = 4))]
 ## merge
-H <- merge(H,N80,by.x=c('iso3','acat','sex'),by.y=c('iso3','AgeGrp','sex'),all.x=TRUE,all.y=FALSE)
-H <- merge(H,ART,by=c('iso3','acat','sex'))
-H[,art:=Value/(val*value*1e3)]
-H[art>1,art:=1.0]
-H <- H[,.(iso3,sex,acat,hiv=val,hiv.lo=lower,hiv.hi=upper,pop=1e3*value,art)]
+H <- merge(H, N80,
+  by.x = c("iso3", "acat", "sex"), by.y = c("iso3", "AgeGrp", "sex"),
+  all.x = TRUE, all.y = FALSE
+)
+H <- merge(H, ART, by = c("iso3", "acat", "sex"))
+H[, art := Value / (val * value * 1e3)]
+H[art > 1, art := 1.0]
+H <- H[, .(iso3, sex, acat, hiv = val, hiv.lo = lower, hiv.hi = upper, pop = 1e3 * value, art)]
+
 
 ## IRR estimates
-PD <- read.csv(here('rawdata/HIVirrs.csv'))
-PD[,c('NAME','DESCRIPTION')]
+parmdat <- read.csv(here("rawdata/HIVirrs.csv"))
+parmdat[, c("NAME", "DESCRIPTION")]
 ## hivp,hivpi,artp
-P <- parse.parmtable(PD)
+P <- parse.parmtable(parmdat)
 names(P)
 
 ## --- PSAify
@@ -158,64 +184,81 @@ names(P)
 ## extend H
 nrep <- 1e3 #replicates
 nn <- nrow(H)
-H <- H[sex!='B']
-H <- H[rep(1:nn,each = nrep)]
-H[,replicate:=rep(1:nrep,nn)]
-H[,hiv.sd:=(hiv.hi-hiv.lo)/3.92]
-H[,hiv:=rgamma(nrow(H), #gamma distribution
-               shape=(hiv/(hiv.sd+1e-6))^2,
-               scale = hiv.sd^2/(hiv+1e-6))]
+H <- H[sex != "B"]
+H <- H[rep(1:nn, each = nrep)]
+H[, replicate := rep(1:nrep, nn)]
+H[, hiv.sd := (hiv.hi - hiv.lo) / 3.92]
+H[, hiv := rgamma(nrow(H), # gamma distribution
+  shape = (hiv / (hiv.sd + 1e-6))^2,
+  scale = hiv.sd^2 / (hiv + 1e-6)
+)]
+
 
 ## make IRRs
-IRR <- makePSA(nrep,P)
-IRR[,replicate:=1:nrep]
-sexage <- data.table(sex=rep(c('M','F'),2),acat=rep(c('10-14','15-19'),each=2))
-IRR <- IRR[rep(1:nrep,each=nrow(sexage))]
-sexage <- sexage[rep(1:4,nrep)]
-IRR[,c('sex','acat'):=sexage]
-IRR <- merge(IRR,H,by=c('replicate','acat','sex'))
-IRR[,irr:=hivpi*(artp*art+1-art)]
-IRR[,irr2:=hivp*(artp*art+1-art)]
-IRR[,HIVinTB:=hiv*irr / (hiv*irr+1-hiv)]
-IRR[,HIVinTB2:=hiv*irr2 / (hiv*irr2+1-hiv)]
+IRR <- makePSA(nrep, P)
+IRR[, replicate := 1:nrep]
+sexage <- data.table(sex = rep(c("M", "F"), 2), acat = rep(c("10-14", "15-19"), each = 2))
+IRR <- IRR[rep(1:nrep, each = nrow(sexage))]
+sexage <- sexage[rep(1:4, nrep)]
+IRR[, c("sex", "acat") := sexage]
+IRR <- merge(IRR, H, by = c("replicate", "acat", "sex"))
+IRR[, irr := hivpi * (artp * art + 1 - art)]
+IRR[, irr2 := hivp * (artp * art + 1 - art)]
+IRR[, HIVinTB := hiv * irr / (hiv * irr + 1 - hiv)]
+IRR[, HIVinTB2 := hiv * irr2 / (hiv * irr2 + 1 - hiv)]
+IRM <- IRR[, .(HIVinTB = mean(HIVinTB), HIVinTB2 = mean(HIVinTB2), hiv = mean(hiv)),
+  by = .(iso3, acat)
+] # mean
 
-IRM <- IRR[,.(HIVinTB=mean(HIVinTB),HIVinTB2=mean(HIVinTB2),hiv=mean(hiv)),by=.(iso3,acat)] #mean
+
 
 ## average
-DRAM <- DRA[age>9,.(Country,Sex,age,RR,RR.sd)]
-DRAM[,acat:=ifelse(age<=14,'10-14','15-19')]
-DRAM[,sex:=ifelse(Sex=='Boys','M','F')]
-setdiff(DRAM$Country,ckey$newcountry) #these get dropped
-DRAML <- DRAM[Country %in% ckey$newcountry] #for plotting
-DRAM <- merge(DRAM,ckey[,.(iso3,newcountry)],by.x = 'Country',by.y='newcountry',all.y=TRUE,all.x = FALSE)
-DRAM <- DRAM[,.(RR=mean(RR),RR.sd=ssum(RR.sd)/sqrt(5)),by=.(iso3,sex,acat)]
+DRAM <- DRA[age > 9, .(Country, Sex, age, RR, RR.sd)]
+DRAM[, acat := ifelse(age <= 14, "10-14", "15-19")]
+DRAM[, sex := ifelse(Sex == "Boys", "M", "F")]
+setdiff(DRAM$Country, ckey$newcountry) # these get dropped
+DRAML <- DRAM[Country %in% ckey$newcountry] # for plotting
+DRAM <- merge(DRAM, ckey[, .(iso3, newcountry)],
+  by.x = "Country", by.y = "newcountry", all.y = TRUE, all.x = FALSE
+)
+DRAM <- DRAM[, .(RR = mean(RR), RR.sd = ssum(RR.sd) / sqrt(5)), by = .(iso3, sex, acat)]
+
 
 ## check haven't spuriously shrunk uncertainty:
-DRA[,1e2*mean(RR.sd/RR)]
-DRAM[,1e2*mean(RR.sd/RR)]
-DRA[,1e2*median(RR.sd/RR)]
-DRAM[,1e2*median(RR.sd/RR)]
+DRA[, 1e2 * mean(RR.sd / RR)]
+DRAM[, 1e2 * mean(RR.sd / RR)]
+DRA[, 1e2 * median(RR.sd / RR)]
+DRAM[, 1e2 * median(RR.sd / RR)]
+
 
 ## lengthen
 nn <- nrow(DRAM)
-DRAM <- DRAM[rep(1:nn,nrep)]
-DRAM[,replicate:=rep(1:nrep,each = nn)]
-DRAM[,RR:=rnorm(n=nrow(DRAM),mean=RR,sd=RR.sd)]
+DRAM <- DRAM[rep(1:nn, nrep)]
+DRAM[, replicate := rep(1:nrep, each = nn)]
+DRAM[, RR := rnorm(n = nrow(DRAM), mean = RR, sd = RR.sd)]
 
 ## generate/capture thinness measure
-load(file=here('rawdata/UW.Rdata'))
-UW <- merge(UW,ckey[,.(iso3,newcountry)],by.y='newcountry',by.x = 'Country')
-names(UW) <- c('Country','Sex','Year','Age group',
-               'p1SD','l1SD','h1SD','p2SD','l2SD','h2SD','iso3')
-UW <- UW[`Age group`>9]
-UW[,sex:=ifelse(Sex=='Boys','M','F')]
-UW[,acat:=ifelse(`Age group`>14,'15-19','10-14')]
-UW <- UW[,.(iso3,sex,acat,
-            p1SD,p1SD.sd=(h1SD-l1SD)/3.92,
-            p2SD,p2SD.sd=(h2SD-l2SD)/3.92)]
-UWS <- UW[,.(p1SD=mean(p1SD),p1SD.sd=ssum(p1SD.sd)/sqrt(10),
-             p2SD=mean(p2SD),p2SD.sd=ssum(p2SD.sd)/sqrt(10)),
-          by=.(iso3,acat)]
+load(file = here("rawdata/UW.Rdata"))
+UW <- merge(UW, ckey[, .(iso3, newcountry)], by.y = "newcountry", by.x = "Country")
+names(UW) <- c(
+  "Country", "Sex", "Year", "Age group",
+  "p1SD", "l1SD", "h1SD", "p2SD", "l2SD", "h2SD", "iso3"
+)
+UW <- UW[`Age group` > 9]
+UW[, sex := ifelse(Sex == "Boys", "M", "F")]
+UW[, acat := ifelse(`Age group` > 14, "15-19", "10-14")]
+UW <- UW[, .(iso3, sex, acat,
+  p1SD,
+  p1SD.sd = (h1SD - l1SD) / 3.92,
+  p2SD, p2SD.sd = (h2SD - l2SD) / 3.92
+)]
+UWS <- UW[, .(
+  p1SD = mean(p1SD), p1SD.sd = ssum(p1SD.sd) / sqrt(10),
+  p2SD = mean(p2SD), p2SD.sd = ssum(p2SD.sd) / sqrt(10)
+),
+by = .(iso3, acat)
+]
+
 
 ## how similar?
 GP2 <- ggplot(UWS,aes(p1SD,p2SD,label=iso3))+
@@ -230,30 +273,94 @@ ggsave(GP2,file=here('plots/UWcf.png'),h=5,w=10)
 
 
 ## combine
-IRR <- merge(IRR,DRAM[,.(replicate,iso3,sex,acat,RRbmi=RR,thin=RR)],
-             by=c('replicate','iso3','sex','acat'))
+IRR <- merge(IRR, DRAM[, .(replicate, iso3, sex, acat, RRbmi = RR, thin = RR)],
+  by = c("replicate", "iso3", "sex", "acat")
+)
 
 
-save(IRR,file=here('PAF/data/IRR.Rdata'))
+## ====== pregnancy & postpartum ===
+load(file = here("rawdata/PD.Rdata")) # WPP age-specific pregnancy rates
+## demographics treated as equally weighted mean
+PD <- PD[ISO3_code %in% IRR[, unique(iso3)]] #our countries
+PD <- PD[AgeGrp %in% c("10-14", "15-19"), .(iso3 = ISO3_code, ASFR, acat = AgeGrp)] #adolescents
+PD[,preg.prev:=0.75 * ASFR / 1e3] #prevalence of pregnancy assuming 9 months
+PD[, preg.PP := 0.5 * ASFR / 1e3] # prevalence of postpartum assuming 6 months
 
-load(file=here('PAF/data/IRR.Rdata'))
+## taking weighted mean of Zenner and Jonsson
+## see: https://en.wikipedia.org/wiki/Inverse-variance_weighting
+## study     preg             PP
+## Zenner    1.29 (0.82-2.03)	1.95 (1.24-3.07)
+## Jonsson   1.4 (1.1-1.7)	  1.9 (1.5-2.5)
 
+## pregnancy IRR parameterse
+## during pregnancy
+ivwts <- 3.92^2 / c((0.82 - 2.03)^2, (1.1 - 1.7)^2)
+(ivmn <- weighted.mean(c(1.29, 1.4), ivwts))
+ivv <- 1 / sum(ivwts)
+c(ivmn, ivmn - sqrt(ivv) * 1.96, ivmn + sqrt(ivv) * 1.96)
+(pg.pmz <- getLNparms(ivmn,ivv))
+## postpartum
+ivwts <- 3.92^2 / c((1.24 - 3.07)^2, (1.5 - 2.5)^2)
+(ivmn <- weighted.mean(c(1.95, 1.9), ivwts))
+ivv <- 1 / sum(ivwts)
+c(ivmn, ivmn - sqrt(ivv) * 1.96, ivmn + sqrt(ivv) * 1.96)
+(pp.pmz <- getLNparms(ivmn, ivv))
+
+
+## --- PSAify
+PDA <- PD[rep(1:nrow(PD), each = max(IRR$replicate))]
+PDA[, replicate := rep(1:max(IRR$replicate), nrow(PD))]
+PDA[, pg.irr := rlnorm(nrow(PDA), meanlog = pg.pmz$mu, sdlog = pg.pmz$sig)]
+PDA[, pp.irr := rlnorm(nrow(PDA), meanlog = pp.pmz$mu, sdlog = pp.pmz$sig)]
+PDA[, sex := "F"]
+
+
+## add in other sexes/ages
+PDAxtra <- copy(PDA)
+PDAxtra[, c("preg.prev", "preg.PP", "pg.irr", "pp.irr") := .(0, 0, 1, 1)]
+PDAxtra[, sex := "M"]
+PDA <- rbind(PDA, PDAxtra) # M
+## check:
+unique(PDA[,.(sex,acat)])
+
+## merge in
+PDA[, ASFR := NULL] # drop
+IRR <- merge(IRR, PDA, by = c("replicate", "iso3", "sex", "acat"), all.x = TRUE, all.y = FALSE)
+summary(IRR) #check
+
+
+save(IRR, file = here("PAF/data/IRR.Rdata"))
+
+
+load(file = here("PAF/data/IRR.Rdata"))
 
 ## [(1-h+h*irr) - (1)] / (1-h+h*irr) = 1 - 1/(1-h+h*irr)
-IRR[,PAF.hiv:=1-1/(1-hiv+hiv*irr)]
-IRR[,PAF.bmi:=1-1/(1-1.0+1.0*RRbmi)] #coverage is 1 since average for all population
+IRR[, PAF.hiv := 1 - 1 / (1 - hiv + hiv * irr)]
+IRR[, PAF.bmi := 1 - 1 / (1 - 1.0 + 1.0 * RRbmi)] # coverage is 1 since average for all population
+## pregnancy AND postpartum
+IRR[, PAF.ppp := 1 - 1 / (1 - (preg.prev + preg.PP) + (preg.prev * pg.irr + preg.PP * pp.irr))]
+
 
 
 ## summary table
-IRRSS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
-               a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
-               th.mid=mean(thin),th.lo=lo(thin),th.hi=hi(thin),
-               hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
-               BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi)),
-            by=.(iso3,sex,acat)]
+IRRSS <- IRR[, .(
+  h.mid = mean(hiv), h.lo = lo(hiv), h.hi = hi(hiv),
+  a.mid = mean(art), a.lo = lo(art), a.hi = hi(art),
+  th.mid = mean(thin), th.lo = lo(thin), th.hi = hi(thin),
+  ppp.mid = mean(preg.prev + preg.PP),
+  ppp.lo = lo(preg.prev + preg.PP),
+  ppp.hi = hi(preg.prev + preg.PP),
+  hiv.mid = mean(PAF.hiv), hiv.lo = lo(PAF.hiv), hiv.hi = hi(PAF.hiv),
+  BMI.mid = mean(PAF.bmi), BMI.lo = lo(PAF.bmi), BMI.hi = hi(PAF.bmi),
+  PPP.mid = mean(PAF.ppp), PPP.lo = lo(PAF.ppp), PPP.hi = hi(PAF.ppp)
+),
+by = .(iso3, sex, acat)
+]
 
-tmp <- dcast(data=IRRSS,iso3+acat ~ sex,value.var = c('BMI.mid','hiv.mid'))
-tmp[,sex:=NA]
+
+tmp <- dcast(data = IRRSS, iso3 + acat ~ sex, value.var = c("BMI.mid", "hiv.mid"))
+tmp[, sex := NA]
+
 
 GP <- ggplot(IRRSS,aes(hiv.mid,BMI.mid,col=sex,shape=sex,label=iso3))+
   scale_x_continuous(label=percent)+scale_y_continuous(label=percent)+
@@ -268,39 +375,65 @@ GP + geom_segment(data=tmp,aes(x=hiv.mid_F,xend=hiv.mid_M,
                             y=BMI.mid_F,yend=BMI.mid_M,
                             group=paste0(iso3,acat)),col='grey')
 
-ggsave(GP,file=here('plots/PAFsexCF.png'),h=8,w=15)
+ggsave(GP, file = here("plots/PAFsexCF.png"), h = 8, w = 15)
 
-IRRS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
-                a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
-                hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
-                BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi)),
-             by=.(iso3,acat)]
+
+IRRS <- IRR[, .(
+  h.mid = mean(hiv), h.lo = lo(hiv), h.hi = hi(hiv),
+  a.mid = mean(art), a.lo = lo(art), a.hi = hi(art),
+  ppp.mid = mean(preg.prev + preg.PP),
+  ppp.lo = lo(preg.prev + preg.PP),
+  ppp.hi = hi(preg.prev + preg.PP),
+  hiv.mid = mean(PAF.hiv), hiv.lo = lo(PAF.hiv), hiv.hi = hi(PAF.hiv),
+  BMI.mid = mean(PAF.bmi), BMI.lo = lo(PAF.bmi), BMI.hi = hi(PAF.bmi),
+  PPP.mid = mean(PAF.ppp), PPP.lo = lo(PAF.ppp), PPP.hi = hi(PAF.ppp)
+),
+by = .(iso3, acat)
+]
 IRRS <- merge(IRRS,
-              UWS[,.(iso3,acat,th.mid=p2SD,th.lo=pmax(p2SD-1.96*p2SD.sd,0),th.hi=p2SD+1.96*p2SD.sd)],
-              by=c('iso3','acat')) #merge underweight data
+              UWS[, .(iso3, acat,
+                      th.mid = p2SD,
+                      th.lo = pmax(p2SD - 1.96 * p2SD.sd, 0),
+                      th.hi = p2SD + 1.96 * p2SD.sd)],
+  by = c("iso3", "acat")
+) # merge underweight data
+
 
 ## IRRS[,thinness:=paste0(rds(th.mid*1e2))]
-IRRS[,thinness:=fmtpc(th.mid,th.lo,th.hi)]
-IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
-IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
-IRRS[,BMI.PAF:=fmtpc(BMI.mid,BMI.lo,BMI.hi)]
-IRRS[,hiv.PAF:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
-IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,art,BMI.PAF,hiv.PAF)]
-IRRS <- dcast(IRRS,iso3 ~ acat, value.var = c('thinness','BMI.PAF','hiv','art','hiv.PAF'))
-IRRS <- merge(IRRS,ckey[,.(iso3,country=newcountry)],by='iso3')
-setcolorder(IRRS,neworder = c("iso3","country",
-                              "thinness_10-14",
-                              "BMI.PAF_10-14",
-                              "hiv_10-14",
-                              "art_10-14",
-                              "hiv.PAF_10-14",
-                              "thinness_15-19",
-                              "BMI.PAF_15-19",
-                              "hiv_15-19",
-                              "art_15-19",
-                              "hiv.PAF_15-19"))
+IRRS[, thinness := fmtpc(th.mid, th.lo, th.hi)]
+IRRS[, hiv := fmtpc(h.mid, h.lo, h.hi)]
+IRRS[, art := fmtpc(a.mid, a.lo, a.hi)]
+IRRS[, ppp := fmtpc(ppp.mid, ppp.lo, ppp.hi)]
+IRRS[, BMI.PAF := fmtpc(BMI.mid, BMI.lo, BMI.hi)]
+IRRS[, hiv.PAF := fmtpc(hiv.mid, hiv.lo, hiv.hi)]
+IRRS[, PPP.PAF := fmtpc(PPP.mid, PPP.lo, PPP.hi)]
 
-fwrite(IRRS,file=here('outdata/PAF.csv'))
+IRRS <- IRRS[order(iso3, acat), .(iso3, acat, thinness, hiv, art, ppp, BMI.PAF, hiv.PAF, PPP.PAF)]
+IRRS <- dcast(IRRS, iso3 ~ acat,
+  value.var = c("thinness", "BMI.PAF", "hiv", "art", "hiv.PAF", "ppp", "PPP.PAF")
+)
+
+IRRS <- merge(IRRS,ckey[,.(iso3,country=newcountry)],by='iso3')
+setcolorder(IRRS, neworder = c(
+  "iso3", "country",
+  "thinness_10-14",
+  "BMI.PAF_10-14",
+  "hiv_10-14",
+  "art_10-14",
+  "hiv.PAF_10-14",
+  "ppp_10-14",
+  "PPP.PAF_10-14",
+  "thinness_15-19",
+  "BMI.PAF_15-19",
+  "hiv_15-19",
+  "art_15-19",
+  "hiv.PAF_15-19",
+  "ppp_15-19",
+  "PPP.PAF_15-19"
+))
+
+fwrite(IRRS, file = here("outdata/PAF.csv"))
+
 
 
 
@@ -312,37 +445,44 @@ GP <- ggplot(DRAML,aes(age,RR,ymin=RR-RR.sd*1.96,ymax=RR+RR.sd*1.96,col=sex,grou
   theme_linedraw()+theme(legend.position='top')+
   xlab('Age in years')+ylab('Risk ratio for TB due to BMI distribution')
 
-ggsave(GP,file=here('plots/bmiRRbyage.png'),h=10,w=10)
+ggsave(GP, file = here("plots/bmiRRbyage.png"), h = 10, w = 10)
+
 
 ## how much of age difference is driven by BMI?
-bmia <- DRAML[,.(RR=mean(RR)),by=.(acat,Country)]
-bmia <- dcast(bmia,Country ~ acat,value.var = 'RR')
-bmia[,RR:=`15-19`/`10-14`]
-fwrite(bmia,file=here('outdata/bmia.csv'))
+bmia <- DRAML[, .(RR = mean(RR)), by = .(acat, Country)]
+bmia <- dcast(bmia, Country ~ acat, value.var = "RR")
+bmia[, RR := `15-19` / `10-14`]
+
+fwrite(bmia, file = here("outdata/bmia.csv"))
+
 
 
 ## MF plot
-MF <- IRR[,.(replicate,iso3,sex,acat,RRB = RRbmi * (1-hiv+hiv*irr) )]
-MF <- dcast(MF,replicate+iso3+acat ~ sex,value.var = 'RRB')
-MF[,mfratio:=M/F]
-MF <- MF[,.(mf=mean(mfratio),mf.lo=lo(mfratio),mf.hi=hi(mfratio)),by=.(iso3,acat)]
+MF <- IRR[, .(replicate, iso3, sex, acat, RRB = RRbmi * (1 - hiv + hiv * irr))]
+MF <- dcast(MF, replicate + iso3 + acat ~ sex, value.var = "RRB")
+MF[, mfratio := M / F]
+MF <- MF[, .(mf = mean(mfratio), mf.lo = lo(mfratio), mf.hi = hi(mfratio)), by = .(iso3, acat)]
 
-save(MF,file=here('PAF/data/MF.Rdata'))
 
-load(file=here('PAF/data/MF.Rdata'))
+save(MF, file = here("PAF/data/MFhb.Rdata")) #NOTE HIV & BMI only
 
-tmp <- MF[acat=='10-14']
+
+load(file = here("PAF/data/MFhb.Rdata"))
+
+
+tmp <- MF[acat == "10-14"]
 der <- order(tmp$mf)
-lvls <- unique(tmp[der,iso3])
+lvls <- unique(tmp[der, iso3])
 length(lvls)
-MF$iso3 <- factor(MF$iso3,levels=lvls,ordered=TRUE)
-MF[,age:=acat]
+MF$iso3 <- factor(MF$iso3, levels = lvls, ordered = TRUE)
+MF[, age := acat]
+
 ## text data
-TXT <- dcast(data=MF[,.(iso3,age,mf)],iso3 ~ age,value.var='mf'  )
-TXT[,txtr:=`15-19`/`10-14`]
-TXT[,txt:=round(txtr,2)]
-TXT[,c('mf','mf.lo','mf.hi'):=1.5]
-TXT[,c('sex','age'):=NA]
+TXT <- dcast(data = MF[, .(iso3, age, mf)], iso3 ~ age, value.var = "mf")
+TXT[, txtr := `15-19` / `10-14`]
+TXT[, txt := round(txtr, 2)]
+TXT[, c("mf", "mf.lo", "mf.hi") := 1.5]
+TXT[, c("sex", "age") := NA]
 TXT <- TXT[iso3 %in% MF$iso3]
 
 pd <- position_dodge(0.25)
@@ -352,14 +492,15 @@ GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
   theme_classic()+theme(legend.position='top')+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios due to HIV & BMI')+
   geom_hline(yintercept = 1,col='grey',lty=2) +
-  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
+  geom_text(data=TXT,aes(label=txt),col='black',show.legend=FALSE)+
   annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
-## GPP
+GPP
 
-ggsave(GPP,file=here('plots/MFcountry.png'),h=7,w=7)
+ggsave(GPP, file = here("plots/MFcountryHB.png"), h = 7, w = 7)
+
 
 ## comparison with notifications
-fn <- gh('progression/data/NR.Rdata')
+fn <- gh("progression/data/NR.Rdata")
 if(file.exists(fn)){
   load(fn)
 } else {
@@ -380,10 +521,11 @@ if(file.exists(fn)){
   save(NR,file=fn)
 }
 
-NR <- dcast(NR[sex!='B'],iso3+acat~sex,value.var='notified')
-NR[,nmf:=M/F]
-NR <- merge(MF,NR[,.(iso3,acat,nmf)],by=c('iso3','acat'))
+NR <- dcast(NR[sex != "B"], iso3 + acat ~ sex, value.var = "notified")
+NR[, nmf := M / F]
+NR <- merge(MF, NR[, .(iso3, acat, nmf)], by = c("iso3", "acat"))
 NR <- NR[!is.na(nmf)]
+
 
 
 ggplot(NR,aes(nmf,mf,ymin=mf.lo,ymax=mf.hi,col=age,shape=age,label=iso3))+
@@ -397,4 +539,7 @@ ggplot(NR,aes(nmf,mf,ymin=mf.lo,ymax=mf.hi,col=age,shape=age,label=iso3))+
   ylab('MF ratio due to BMI & HIV')+
   theme(legend.position='top')
 
-ggsave(file=here('plots/MFcountryVNotes.png'),h=7,w=10)
+ggsave(file = here("plots/MFcountryVNotes.png"), h = 7, w = 10)
+
+
+## NOTE these MF graphs are restricted to HIV & BMI effects only 
