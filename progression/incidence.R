@@ -36,10 +36,17 @@ fmt1 <- function(x,y,z) paste0(rd1(x)," (",rd1(y)," to ",rd1(z),")")
 gh <- function(x) glue(here(x))
 rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-set.seed(1234)
-
 load(here("progression/data/ckey.Rdata"))
 
+
+set.seed(1234)
+## sensitivity analysis flag
+slowon <- FALSE # by default, include slow progression, FALSE = off
+if (slowon) {
+  cat("Running basecase slow progression assumption!\n")
+} else {
+  cat("Running SA with slow progression off!\n")
+}
 
 
 ## Martinez 2-year progression rates:
@@ -100,7 +107,7 @@ rnra[, prog.recent2 := rep(prog.recent2[1:sum(mixing == "assortative")], 2)]
 
 
 tmp <- rep(rlnorm(nrow(rnra) / 2, meanlog = eps$meanlog, sdlog = eps$sdlog), 2)
-rnra[,prog.slow:=tmp]
+rnra[,prog.slow:=tmp * slowon]
 ## incidence
 rnra[, inc0.a := (P1) * prog.recent1 + (P2 - P1) * prog.recent2 + (P - P2) * prog.slow] # baseline incidence
 rnra[, inc0.m := (m.P1) * prog.recent1 + (m.P2 - m.P1) * prog.recent2 + (m.P - m.P2) * prog.slow] # baseline incidence, males
@@ -274,6 +281,37 @@ by = .(acat, mixing)
 rnrtot <- merge(rnrtot, rnrtoti, by = c("acat", "mixing"))
 rnrtot[, iso3 := "TOTAL"]
 
+## total total
+tottot <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)), by = .(mixing, replicate)]
+tottot <- tottot[, .(
+  inc.num.mid = mean(inc.num), inc.num0.mid = mean(inc.num0),
+  inc.num.lo = lo(inc.num), inc.num0.lo = lo(inc.num0),
+  inc.num.hi = hi(inc.num), inc.num0.hi = hi(inc.num0)
+), by = mixing]
+tottot[, inc.txt := fmtb(as.integer(inc.num.mid), as.integer(inc.num.lo), as.integer(inc.num.hi))]
+tottot[, inc0.txt := fmtb(as.integer(inc.num0.mid), as.integer(inc.num0.lo), as.integer(inc.num0.hi))]
+
+## slowon SA
+if (slowon) {
+  cat("Writing basecase tottot!\n")
+  fwrite(tottot, file = here("outdata/tottot.csv"))
+} else {
+  cat("Calculating & writing slowon SA tottot!\n")
+  fn <- here("outdata/tottot.csv")
+  if(!file.exists(fn)){
+    cat("Need to run basecase first if you want to save comparative SA results!\n")
+  } else {
+    tottot0 <- fread(fn)
+    tottot <- merge(tottot,
+      tottot0[, .(mixing, bc.inc.num.mid = inc.num.mid, bc.inc.num0.mid = inc.num0.mid)],
+      by = "mixing"
+    )
+    tottot[, c("pcbc", "pcbc0") := .(1e2 * inc.num.mid / bc.inc.num.mid,
+                                     1e2 * inc.num0.mid / bc.inc.num0.mid)]
+    fwrite(tottot, file = here("outdata/tottot.SA.csv"))
+  }
+}
+
 
 ## by sex and age
 rnrtoti2 <- rnr[, .(inc.num0 = sum(inc.num0), inc.num = sum(inc.num)),
@@ -337,22 +375,25 @@ smy[, CDR := 1e2 * notified / inc.num.mid]
 
 (tmp <- smy[!is.na(CDR), .(iso3, mixing, acat, CDR0, CDR)][order(mixing)])
 
-
-fwrite(tmp, file = gh("outdata/CDR.csv"))
-fwrite(smy, file = gh("outdata/smy.csv"))
-
+if (slowon) {
+  fwrite(tmp, file = gh("outdata/CDR.csv"))
+  fwrite(smy, file = gh("outdata/smy.csv"))
+}
 
 ## CDR stats for text
 cdry <- tmp[mixing == "assortative" & acat == "10-14"]
 cdry <- cdry[order(CDR)]
 
-fwrite(cdry, file = gh("outdata/cdry.csv"))
-
+if (slowon) {
+  fwrite(cdry, file = gh("outdata/cdry.csv"))
+}
 
 cdro <- tmp[mixing == "assortative" & acat == "15-19"]
 cdro <- cdro[order(CDR)]
 
-fwrite(cdro, file = gh("outdata/cdro.csv"))
+if (slowon) {
+  fwrite(cdro, file = gh("outdata/cdro.csv"))
+}
 
 ## reformat
 smy[, LTBI.fmt := fmtb(LTBI.mid, LTBI.lo, LTBI.hi)]
@@ -370,9 +411,9 @@ setkey(out.ltbi, iso3)
 setcolorder(out.ltbi,c("iso3","LTBI.fmt_10-14","LTBI2.fmt_10-14","LTBI1.fmt_10-14",
                        "LTBI.fmt_15-19","LTBI2.fmt_15-19","LTBI1.fmt_15-19"))
 
-
-fwrite(out.ltbi, file = gh("outdata/out.ltbi.csv"))
-
+if (slowon) {
+  fwrite(out.ltbi, file = gh("outdata/out.ltbi.csv"))
+}
 
 ## LTBI by sex
 out.ltbi.sex <- copy(rnrtot2)
@@ -382,8 +423,9 @@ out.ltbi.sex[, LTBI2.fmt := fmtb(LTBI2.mid, LTBI2.lo, LTBI2.hi)]
 out.ltbi.sex <- out.ltbi.sex[, .(sex, acat, mixing, LTBI1.fmt, LTBI2.fmt, LTBI.fmt)]
 setkey(out.ltbi.sex, mixing, acat, sex)
 
-fwrite(out.ltbi.sex, file = here("outdata/out.ltbi.sex.csv"))
-
+if (slowon) {
+  fwrite(out.ltbi.sex, file = here("outdata/out.ltbi.sex.csv"))
+}
 
 ## incidence etc by country
 out.inc <- smy[, .(iso3, acat, mixing, inc.num.fmt, inc.num0.fmt, notified, CDR, CDR0)]
@@ -399,8 +441,9 @@ setcolorder(out.inc, c(
   "inc.num.fmt_15-19", "notified_15-19", "CDR_15-19"
 ))
 
-
-fwrite(out.inc[!is.na(`notified_10-14`)], file = gh("outdata/out.inc.csv"))
+if (slowon) {
+  fwrite(out.inc[!is.na(`notified_10-14`)], file = gh("outdata/out.inc.csv"))
+}
 
 ## reformat for plotting
 smy2 <- smy[, .(
@@ -441,10 +484,10 @@ plt <- ggplot(smy2[method=='with risk factors' & mixing=='assortative'],
   theme_light()+theme(legend.position = 'top')
 plt
 
-
-ggsave(plt, file = here("plots/IvN.pdf"), h = 7, w = 14)
-ggsave(plt, file = here("plots/IvN.png"), h = 7, w = 14)
-
+if (slowon) {
+  ggsave(plt, file = here("plots/IvN.pdf"), h = 7, w = 14)
+  ggsave(plt, file = here("plots/IvN.png"), h = 7, w = 14)
+}
 
 
 ## barplot version
@@ -467,9 +510,10 @@ plt <- ggplot(smy2,aes(acat,y=inc.num.mid,fill=fmeth))+
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
 plt
 
-ggsave(plt, file = here("plots/Ibar.pdf"), h = 9, w = 12)
-ggsave(plt, file = here("plots/Ibar.png"), h = 9, w = 12)
-
+if (slowon) {
+  ggsave(plt, file = here("plots/Ibar.pdf"), h = 9, w = 12)
+  ggsave(plt, file = here("plots/Ibar.png"), h = 9, w = 12)
+}
 
 
 ## per capita version of Ibar
@@ -493,9 +537,10 @@ plt <- ggplot(smy3,aes(acat,y=1e5*inc.num.mid/pop,fill=fmeth))+
   theme(legend.position = c(0.5,0.1/2),legend.direction = 'horizontal')
 plt
 
-ggsave(plt, file = here("plots/IbarPC.pdf"), h = 9, w = 12)
-ggsave(plt, file = here("plots/IbarPC.png"), h = 9, w = 12)
-
+if (slowon) {
+  ggsave(plt, file = here("plots/IbarPC.pdf"), h = 9, w = 12)
+  ggsave(plt, file = here("plots/IbarPC.png"), h = 9, w = 12)
+}
 
 ## === sex-based versions for plotting
 (tnmz <- names(rnrtot2))
@@ -544,10 +589,10 @@ plt <- ggplot(smys2[method=='with risk factors' & mixing=='assortative'],
   theme_light()+theme(legend.position = 'top')
 plt
 
-
-ggsave(plt, file = here("plots/IvNsex.pdf"), h = 14, w = 14)
-ggsave(plt, file = here("plots/IvNsex.png"), h = 14, w = 14)
-
+if (slowon) {
+  ggsave(plt, file = here("plots/IvNsex.pdf"), h = 14, w = 14)
+  ggsave(plt, file = here("plots/IvNsex.png"), h = 14, w = 14)
+}
 
 ## barplot version
 smys2[, fmeth := paste0(method, ", ", mixing)]
@@ -583,8 +628,10 @@ GA <- annotate_figure(GA,
                       bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
 GA
 
-ggsave(GA, file = here("plots/Ibarsex.pdf"), h = 12, w = 12)
-ggsave(GA, file = here("plots/Ibarsex.png"), h = 12, w = 12)
+if (slowon) {
+  ggsave(GA, file = here("plots/Ibarsex.pdf"), h = 12, w = 12)
+  ggsave(GA, file = here("plots/Ibarsex.png"), h = 12, w = 12)
+}
 
 ## per capita version of Ibar
 popss <- unique(IRR[, .(iso3, sex, acat, pop)])
@@ -626,9 +673,10 @@ GA <- annotate_figure(GA,
                       bottom = textGrob("Age group (years)", gp = gpar(cex = 1.3)))
 GA
 
-ggsave(GA, file = here("plots/IbarPCsex.pdf"), h = 12, w = 12)
-ggsave(GA, file = here("plots/IbarPCsex.png"), h = 12, w = 12)
-
+if (slowon) {
+  ggsave(GA, file = here("plots/IbarPCsex.pdf"), h = 12, w = 12)
+  ggsave(GA, file = here("plots/IbarPCsex.png"), h = 12, w = 12)
+}
 
 
 ## --- MF plot -------
@@ -682,29 +730,31 @@ GPP <- ggplot(tmp,
   ylim(c(0.75,1.72))
 GPP
 
-ggsave(GPP, file = here("plots/MFcountryFULL.png"), h = 7, w = 7)
-ggsave(GPP, file = here("plots/MFcountryFULL.pdf"), h = 7, w = 7)
-
+if (slowon) {
+  ggsave(GPP, file = here("plots/MFcountryFULL.png"), h = 7, w = 7)
+  ggsave(GPP, file = here("plots/MFcountryFULL.pdf"), h = 7, w = 7)
+}
 
 ## for text
 mfmed <- MF[acat == "10-14" & variable == "with risk factors" & mixing == "assortative"]
-cat(mfmed[, median(mf)], file = gh("outdata/mf.median.y.txt"))
-
+if (slowon) {
+  cat(mfmed[, median(mf)], file = gh("outdata/mf.median.y.txt"))
+}
 
 ## For the 15-19 year age group,
 ## the median factor increase in male-to-female ratio due to sex-assortative mixing in this group was Z.
 mfmed <- MF[acat == "15-19" & variable == "with risk factors"]
 mfmed <- dcast(mfmed, iso3 ~ mixing, value.var = "mf")
-
-cat(mfmed[, median(assortative / random)], file = gh("outdata/mf.median.mix.o.txt"))
-
+if (slowon) {
+  cat(mfmed[, median(assortative / random)], file = gh("outdata/mf.median.mix.o.txt"))
+}
 
 ## The median increase in male-to-female ratio between the two age groups was Y.
 mfmed <- MF[variable == "with risk factors" & mixing == "assortative"]
 mfmed <- dcast(mfmed, iso3 ~ acat, value.var = "mf")
-
-cat(mfmed[, median(`15-19` / `10-14`)], file = gh("outdata/mf.median.age.txt"))
-
+if (slowon) {
+  cat(mfmed[, median(`15-19` / `10-14`)], file = gh("outdata/mf.median.age.txt"))
+}
 
 ## percentages
 ## dQ/Q=dlog(A/B) = dA/A + dB/B
@@ -725,9 +775,10 @@ PC[, percentage := fmt1(pc, pc.lo, pc.hi)]
 youngpc <- PC[acat == "10-14"][order(pc, decreasing = TRUE), .(iso3, percentage)]
 oldpc <- PC[acat == "15-19"][order(pc, decreasing = TRUE), .(iso3, percentage)]
 
-fwrite(youngpc, file = gh("outdata/PC_ranked_1014.csv"))
-fwrite(oldpc, file = gh("outdata/PC_ranked_1519.csv"))
-
+if (slowon) {
+  fwrite(youngpc, file = gh("outdata/PC_ranked_1014.csv"))
+  fwrite(oldpc, file = gh("outdata/PC_ranked_1519.csv"))
+}
 
 ## comparison table for totals
 II <- fread(gh("rawdata/IHME-GBD_2019_DATA-6d1c5bfb-1.csv"))
@@ -769,8 +820,9 @@ IIT2[, sum(inc.num.mid), by = acat]
 
 ## output
 IIT2[, txt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
-fwrite(IIT2[, .(acat, sex, fmeth, txt)], file = fn <- gh("outdata/cf.ihme.sex.csv"))
-
+if (slowon) {
+  fwrite(IIT2[, .(acat, sex, fmeth, txt)], file = fn <- gh("outdata/cf.ihme.sex.csv"))
+}
 
 ## snow approach, same splits
 ## ========== active TB =======
@@ -854,10 +906,10 @@ setcolorder(TCFe, c(
   "IHME", "Snow"
 ))
 
-
-fn <- gh("outdata/cftab.csv")
-fwrite(TCFe, file = fn)
-
+if (slowon) {
+  fn <- gh("outdata/cftab.csv")
+  fwrite(TCFe, file = fn)
+}
 
 print(TCFe)
 
@@ -886,9 +938,10 @@ setcolorder(TWS, c(
 
 TWS
 
-fn <- gh("outdata/cfWS.csv")
-fwrite(TWS, file = fn)
-
+if (slowon) {
+  fn <- gh("outdata/cfWS.csv")
+  fwrite(TWS, file = fn)
+}
 
 
 ## country-level comparisons
@@ -926,11 +979,12 @@ plt <- ggplot(CC,aes(ref,incidence,ymin=incidence.lo,ymax=incidence.hi,
   theme_light()+theme(legend.position = 'top')
 plt
 
-fac <- 2
-WW <- 10
-ggsave(plt, file = here("plots/IvE.pdf"), h = WW, w = fac * WW)
-ggsave(plt, file = here("plots/IvE.png"), h = WW, w = fac * WW)
-
+if (slowon) {
+  fac <- 2
+  WW <- 10
+  ggsave(plt, file = here("plots/IvE.pdf"), h = WW, w = fac * WW)
+  ggsave(plt, file = here("plots/IvE.png"), h = WW, w = fac * WW)
+}
 
 
 ## ratio by country: old to young; effect of mixing
@@ -955,8 +1009,9 @@ ggplot(ratsm,aes(x=iso3,y=value,col=variable,shape=variable)) +
   ylab('Ratio relative to random mixing & no risk factors')+
   theme(legend.position =  'top',legend.title = element_blank() )
 
-
-ggsave(file = here("plots/ratio_method.png"), h = 5, w = 7)
+if (slowon) {
+  ggsave(file = here("plots/ratio_method.png"), h = 5, w = 7)
+}
 
 ## age ratios
 rats2 <- dcast(rats[method == "with risk factors, assortative"], iso3 ~ acat, value.var = "incidence")
@@ -969,7 +1024,9 @@ ggplot(rats2,aes(x=iso3,y=`ratio by age category`)) +
   geom_segment(aes(xend=iso3,y=0,yend=`ratio by age category`))+
   coord_flip()
 
-ggsave(file = here("plots/ratio_age.png"), h = 5, w = 5)
+if (slowon) {
+  ggsave(file = here("plots/ratio_age.png"), h = 5, w = 5)
+}
 
 ## against mean age of TB
 allage <- allage[
@@ -995,9 +1052,9 @@ ggplot(rats2,aes(label=iso3,x=`mean age of TB`,y=`ratio by age category`)) +
   geom_point(size=2)+
   geom_text_repel()
 
-
-ggsave(file = here("plots/ratio_age_scatter.png"), h = 5, w = 5)
-
+if (slowon) {
+  ggsave(file = here("plots/ratio_age_scatter.png"), h = 5, w = 5)
+}
 
 popl <- unique(IRR[, .(iso3, sex, acat, pop)])
 popl <- popl[, .(pop = sum(pop)), by = .(iso3, acat)]
@@ -1023,9 +1080,9 @@ ggplot(nrts2,aes(rr,pciratio,label=iso3))+
   theme_classic()+ggpubr::grids()+
   geom_abline(slope=1,intercept=0,col=2)
 
-
-ggsave(file = here("plots/ratio_pcivRR_scatter.png"), h = 7, w = 7)
-
+if (slowon) {
+  ggsave(file = here("plots/ratio_pcivRR_scatter.png"), h = 7, w = 7)
+}
 
 ## HIV/TB by region
 load(here("rawdata/whokey.Rdata"))
@@ -1058,5 +1115,6 @@ nhiv[, c("hivtb.lo", "hivtb.hi") := .(pmax(0, hivtb - hivtb.w / 2), hivtb + hivt
 nhiv[, txt := fmtb(as.integer(hivtb), as.integer(hivtb.lo), as.integer(hivtb.hi))]
 nhiv <- nhiv[order(acat, g_whoregion)]
 
-fwrite(nhiv[, .(acat, g_whoregion, txt)], file = here("outdata/nhiv.csv"))
-
+if (slowon) {
+  fwrite(nhiv[, .(acat, g_whoregion, txt)], file = here("outdata/nhiv.csv"))
+}
