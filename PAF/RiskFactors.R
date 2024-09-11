@@ -148,10 +148,10 @@ H[art>1,art:=1.0]
 H <- H[,.(iso3,sex,acat,hiv=val,hiv.lo=lower,hiv.hi=upper,pop=1e3*value,art)]
 
 ## IRR estimates
-PD <- read.csv(here('rawdata/HIVirrs.csv'))
-PD[,c('NAME','DESCRIPTION')]
+parmdat <- read.csv(here('rawdata/HIVirrs.csv'))
+parmdat[,c('NAME','DESCRIPTION')]
 ## hivp,hivpi,artp
-P <- parse.parmtable(PD)
+P <- parse.parmtable(parmdat)
 names(P)
 
 ## --- PSAify
@@ -280,13 +280,20 @@ load(file=here('PAF/data/IRR.Rdata'))
 IRR[,PAF.hiv:=1-1/(1-hiv+hiv*irr)]
 IRR[,PAF.bmi:=1-1/(1-1.0+1.0*RRbmi)] #coverage is 1 since average for all population
 
+## pregnancy AND postpartum
+IRR[, PAF.ppp := 1 - 1 / (1 - (preg.prev + preg.PP) + (preg.prev * pg.irr + preg.PP * pp.irr))]
+
 
 ## summary table
 IRRSS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
                a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
                th.mid=mean(thin),th.lo=lo(thin),th.hi=hi(thin),
+               ppp.mid=mean(preg.prev + preg.PP),
+               ppp.lo=lo(preg.prev + preg.PP),
+               ppp.hi=hi(preg.prev + preg.PP),
                hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
-               BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi)),
+               BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi),
+               PPP.mid=mean(PAF.ppp),PPP.lo=lo(PAF.ppp),PPP.hi=hi(PAF.ppp)),
             by=.(iso3,sex,acat)]
 
 tmp <- dcast(data=IRRSS,iso3+acat ~ sex,value.var = c('BMI.mid','hiv.mid'))
@@ -308,22 +315,32 @@ GP + geom_segment(data=tmp,aes(x=hiv.mid_F,xend=hiv.mid_M,
 ggsave(GP,file=here('plots/PAFsexCF.png'),h=8,w=15)
 
 IRRS <- IRR[,.(h.mid=mean(hiv),h.lo=lo(hiv),h.hi=hi(hiv),
-                a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
-                hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
-                BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi)),
+               a.mid=mean(art),a.lo=lo(art),a.hi=hi(art),
+               ppp.mid=mean(preg.prev + preg.PP),
+               ppp.lo=lo(preg.prev + preg.PP),
+               ppp.hi=hi(preg.prev + preg.PP),
+               hiv.mid=mean(PAF.hiv),hiv.lo=lo(PAF.hiv),hiv.hi=hi(PAF.hiv),
+               BMI.mid=mean(PAF.bmi),BMI.lo=lo(PAF.bmi),BMI.hi=hi(PAF.bmi),
+               PPP.mid=mean(PAF.ppp),PPP.lo=lo(PAF.ppp),PPP.hi=hi(PAF.ppp)),
              by=.(iso3,acat)]
 IRRS <- merge(IRRS,
               UWS[,.(iso3,acat,th.mid=p2SD,th.lo=pmax(p2SD-1.96*p2SD.sd,0),th.hi=p2SD+1.96*p2SD.sd)],
               by=c('iso3','acat')) #merge underweight data
 
 ## IRRS[,thinness:=paste0(rds(th.mid*1e2))]
-IRRS[,thinness:=fmtpc(th.mid,th.lo,th.hi)]
-IRRS[,hiv:=fmtpc(h.mid,h.lo,h.hi)]
-IRRS[,art:=fmtpc(a.mid,a.lo,a.hi)]
-IRRS[,BMI.PAF:=fmtpc(BMI.mid,BMI.lo,BMI.hi)]
-IRRS[,hiv.PAF:=fmtpc(hiv.mid,hiv.lo,hiv.hi)]
-IRRS <- IRRS[order(iso3,acat),.(iso3,acat,thinness,hiv,art,BMI.PAF,hiv.PAF)]
-IRRS <- dcast(IRRS,iso3 ~ acat, value.var = c('thinness','BMI.PAF','hiv','art','hiv.PAF'))
+IRRS[, thinness := fmtpc(th.mid, th.lo, th.hi)]
+IRRS[, hiv := fmtpc(h.mid, h.lo, h.hi)]
+IRRS[, art := fmtpc(a.mid, a.lo, a.hi)]
+IRRS[, ppp := fmtpc(ppp.mid, ppp.lo, ppp.hi)]
+IRRS[, BMI.PAF := fmtpc(BMI.mid, BMI.lo, BMI.hi)]
+IRRS[, hiv.PAF := fmtpc(hiv.mid, hiv.lo, hiv.hi)]
+IRRS[, PPP.PAF := fmtpc(PPP.mid, PPP.lo, PPP.hi)]
+
+IRRS <- IRRS[order(iso3, acat), .(iso3, acat, thinness, hiv, art, ppp, BMI.PAF, hiv.PAF, PPP.PAF)]
+IRRS <- dcast(IRRS, iso3 ~ acat,
+  value.var = c("thinness", "BMI.PAF", "hiv", "art", "hiv.PAF", "ppp", "PPP.PAF")
+)
+
 IRRS <- merge(IRRS,ckey[,.(iso3,country=newcountry)],by='iso3')
 setcolorder(IRRS,neworder = c("iso3","country",
                               "thinness_10-14",
@@ -331,11 +348,15 @@ setcolorder(IRRS,neworder = c("iso3","country",
                               "hiv_10-14",
                               "art_10-14",
                               "hiv.PAF_10-14",
+                              "ppp_10-14",
+                              "PPP.PAF_10-14",
                               "thinness_15-19",
                               "BMI.PAF_15-19",
                               "hiv_15-19",
                               "art_15-19",
-                              "hiv.PAF_15-19"))
+                              "hiv.PAF_15-19",
+                              "ppp_15-19",
+                              "PPP.PAF_15-19"))
 
 fwrite(IRRS,file=here('outdata/PAF.csv'))
 
@@ -389,9 +410,9 @@ GPP <- ggplot(MF,aes(iso3,mf,ymin=mf.lo,ymax=mf.hi,col=age))+
   theme_classic()+theme(legend.position='top')+ggpubr::grids()+
   xlab('Country')+ylab('M:F ratio of risk ratios due to HIV & BMI')+
   geom_hline(yintercept = 1,col='grey',lty=2) +
-  geom_text(data=TXT,aes(label=txt),show.legend=FALSE)+
+  geom_text(data=TXT,aes(label=txt),col='black',show.legend=FALSE)+
   annotate('text',y=1.485,x=31.5,label='Older/Younger\nMF ratios',size=3)
-## GPP
+GPP
 
 ggsave(GPP,file=here('plots/MFcountry.png'),h=7,w=7)
 
@@ -435,3 +456,5 @@ ggplot(NR,aes(nmf,mf,ymin=mf.lo,ymax=mf.hi,col=age,shape=age,label=iso3))+
   theme(legend.position='top')
 
 ggsave(file=here('plots/MFcountryVNotes.png'),h=7,w=10)
+
+## NOTE these MF graphs are restricted to HIV & BMI effects only 
