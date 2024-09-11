@@ -296,12 +296,14 @@ PD[, preg.PP := 0.5 * ASFR / 1e3] # prevalence of postpartum assuming 6 months
 ## during pregnancy
 ivwts <- 3.92^2 / c((0.82 - 2.03)^2, (1.1 - 1.7)^2)
 (ivmn <- weighted.mean(c(1.29, 1.4), ivwts))
-ivv <- 1/sum(ivwts)
+ivv <- 1 / sum(ivwts)
+c(ivmn, ivmn - sqrt(ivv) * 1.96, ivmn + sqrt(ivv) * 1.96)
 (pg.pmz <- getLNparms(ivmn,ivv))
 ## postpartum
 ivwts <- 3.92^2 / c((1.24 - 3.07)^2, (1.5 - 2.5)^2)
 (ivmn <- weighted.mean(c(1.95, 1.9), ivwts))
 ivv <- 1 / sum(ivwts)
+c(ivmn, ivmn - sqrt(ivv) * 1.96, ivmn + sqrt(ivv) * 1.96)
 (pp.pmz <- getLNparms(ivmn, ivv))
 
 
