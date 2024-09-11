@@ -38,7 +38,8 @@ rot45 <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 set.seed(1234)
 
-load(here('progression/data/ckey.Rdata'))
+load(here("progression/data/ckey.Rdata"))
+
 
 
 ## Martinez 2-year progression rates:
@@ -66,11 +67,13 @@ pzo1 <- getAB(pmo1,pvo1);
 ## pzo2 <- getAB(pmo2,pvo2)
 pzo2 <- getLNparms(pmo2,pvo2)
 ## curve(dbeta(x,pzo1$a,pzo1$b));curve(dbeta(x,pzo2$a,pzo2$b))
-pzzb <- data.table(acat=c('10-14','15-19'),
-                   A1=c(pzy1$a,pzo1$a),B1=c(pzy1$b,pzo1$b),
-                   ## A2=c(pzy2$a,pzo2$a),B2=c(pzy2$b,pzo2$b)
-                   m2=c(pzy2$mu,pzo2$mu),s2=c(pzy2$sig,pzo2$sig)
-                   )
+pzzb <- data.table(
+  acat = c("10-14", "15-19"),
+  A1 = c(pzy1$a, pzo1$a), B1 = c(pzy1$b, pzo1$b),
+  ## A2=c(pzy2$a,pzo2$a),B2=c(pzy2$b,pzo2$b)
+  m2 = c(pzy2$mu, pzo2$mu), s2 = c(pzy2$sig, pzo2$sig)
+)
+
 
 ## Ragonnet slow progression for >2 years:
 eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
@@ -78,7 +81,7 @@ eps <- list(meanlog=-6.89,sdlog=0.58)         #nu: Ragonnet
 
 ## load LTBI:
 ## load(file=gh('LTBI/data/rnra.Rdata'))
-load(file=gh('LTBI/tmpdata/rnra.full.Rdata'))
+load(file = gh("LTBI/tmpdata/rnra.full.Rdata"))
 
 ## add in acats
 rnra[, acat := ifelse(age > 14, "15-19", "10-14")]
@@ -118,7 +121,6 @@ DRA <- merge(DRA[, .(Country, Sex, age, RR, RR.sd)],
 DRA[, sex := ifelse(Sex == "Boys", "M", "F")]
 DRA <- DRA[age > 9]
 
-## TODO check inclusion of all IRRs
 ## include sex in rnra
 rnra <- melt(
   rnra[, .(acat, iso3, mixing, replicate, age,
@@ -662,6 +664,7 @@ TXT[, age := acat]
 tmp <- MF[!(acat == "10-14" & mixing == "assortative")]
 tmp <- tmp[!(acat == "15-19" & mixing == "assortative" & variable == "no risk factors")]
 tmp <- tmp[!(mixing == "random" & variable == "no risk factors")]
+min(tmp$mf.lo)
 
 ## plot
 pd <- position_dodge(0.5)
@@ -676,7 +679,7 @@ GPP <- ggplot(tmp,
   geom_hline(yintercept = 1,col='grey',lty=2) +
   geom_text(data=TXT,aes(label=txt),show.legend=FALSE,col='black')+
   annotate('text',y=1.7,x=31.5,label='Older/Younger\nMF ratios',size=3)+
-  ylim(c(0.785,1.72))
+  ylim(c(0.75,1.72))
 GPP
 
 ggsave(GPP, file = here("plots/MFcountryFULL.png"), h = 7, w = 7)
