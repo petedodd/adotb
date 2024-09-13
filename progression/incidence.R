@@ -41,7 +41,7 @@ load(here("progression/data/ckey.Rdata"))
 
 set.seed(1234)
 ## sensitivity analysis flag
-slowon <- FALSE # by default, include slow progression, FALSE = off
+slowon <- TRUE # by default, include slow progression, FALSE = off
 if (slowon) {
   cat("Running basecase slow progression assumption!\n")
 } else {
@@ -820,6 +820,7 @@ IIT2[, sum(inc.num.mid), by = acat]
 
 ## output
 IIT2[, txt := fmtb(inc.num.mid, inc.num.lo, inc.num.hi)]
+
 if (slowon) {
   fwrite(IIT2[, .(acat, sex, fmeth, txt)], file = fn <- gh("outdata/cf.ihme.sex.csv"))
 }
@@ -986,7 +987,6 @@ if (slowon) {
   ggsave(plt, file = here("plots/IvE.png"), h = WW, w = fac * WW)
 }
 
-
 ## ratio by country: old to young; effect of mixing
 rats <- smy2[newcountry != "TOTAL", .(iso3, acat,
   method = fmeth, incidence = inc.num.mid,
@@ -1070,6 +1070,12 @@ rrdata <- fread(gh("LTBI/data/RR.csv"))
 nrts2 <- dcast(nrts, iso3 ~ acat, value.var = "pci")
 nrts2[, pciratio := `15-19` / `10-14`]
 nrts2 <- merge(nrts2, rrdata, by = "iso3")
+
+
+if (slowon) {
+  fwrite(nrts2[, .(med=median(pciratio),mn=min(pciratio),mx=max(pciratio))],
+         file = gh("outdata/oy.median.csv"))
+}
 
 
 ggplot(nrts2,aes(rr,pciratio,label=iso3))+
