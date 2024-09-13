@@ -357,6 +357,16 @@ IRRSS <- IRR[, .(
 by = .(iso3, sex, acat)
 ]
 
+## output median for F, PPP
+fwrite(
+  IRRSS[
+    sex == "F" & acat == "15-19",
+    .(md = 1e2 * median(PPP.mid), mn = 1e2 * min(PPP.mid), mx = 1e2 * max(PPP.mid))
+  ],
+  file = gh("outdata/PPP.PAF.F.smy.csv")
+)
+
+
 
 tmp <- dcast(data = IRRSS, iso3 + acat ~ sex, value.var = c("BMI.mid", "hiv.mid"))
 tmp[, sex := NA]
@@ -434,6 +444,42 @@ setcolorder(IRRS, neworder = c(
 
 fwrite(IRRS, file = here("outdata/PAF.csv"))
 
+
+## also version by sex using IRRSS
+IRRSS[, thinness := fmtpc(th.mid, th.lo, th.hi)]
+IRRSS[, hiv := fmtpc(h.mid, h.lo, h.hi)]
+IRRSS[, art := fmtpc(a.mid, a.lo, a.hi)]
+IRRSS[, ppp := fmtpc(ppp.mid, ppp.lo, ppp.hi)]
+IRRSS[, BMI.PAF := fmtpc(BMI.mid, BMI.lo, BMI.hi)]
+IRRSS[, hiv.PAF := fmtpc(hiv.mid, hiv.lo, hiv.hi)]
+IRRSS[, PPP.PAF := fmtpc(PPP.mid, PPP.lo, PPP.hi)]
+
+IRRSS <- IRRSS[order(iso3, sex, acat),
+               .(iso3, sex, acat, thinness, hiv, art, ppp, BMI.PAF, hiv.PAF, PPP.PAF)]
+IRRSS <- dcast(IRRSS, iso3 + sex ~ acat,
+  value.var = c("thinness", "BMI.PAF", "hiv", "art", "hiv.PAF", "ppp", "PPP.PAF")
+)
+
+IRRSS <- merge(IRRSS, ckey[, .(iso3, country = newcountry)], by = "iso3")
+setcolorder(IRRSS, neworder = c(
+  "iso3", "country",
+  "thinness_10-14",
+  "BMI.PAF_10-14",
+  "hiv_10-14",
+  "art_10-14",
+  "hiv.PAF_10-14",
+  "ppp_10-14",
+  "PPP.PAF_10-14",
+  "thinness_15-19",
+  "BMI.PAF_15-19",
+  "hiv_15-19",
+  "art_15-19",
+  "hiv.PAF_15-19",
+  "ppp_15-19",
+  "PPP.PAF_15-19"
+))
+
+fwrite(IRRSS, file = here("outdata/PAF.sex.csv"))
 
 
 
