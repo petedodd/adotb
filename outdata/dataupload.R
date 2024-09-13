@@ -5,15 +5,15 @@ library(googlesheets4)
 
 
 ## reformat & restruct smy
-S <- fread(here('outdata/smy.csv'))
-S <- melt(S[,.(iso3,acat,mixing,inc.num0.fmt,inc.num.fmt)],id=c('iso3','acat','mixing'))
-S[,variable:=ifelse(grepl('0',variable),'Without risk factors','With risk factors')]
-S <- dcast(S,iso3+mixing+variable~acat,value.var='value')
-cnz <- S[,unique(iso3)]
-cnz <- c(sort(cnz[!cnz=='TOTAL']),'TOTAL')
-setkey(S,iso3)
+S <- fread(here("outdata/smy.csv"))
+S <- melt(S[, .(iso3, acat, mixing, inc.num0.fmt, inc.num.fmt)], id = c("iso3", "acat", "mixing"))
+S[, variable := ifelse(grepl("0", variable), "Without risk factors", "With risk factors")]
+S <- dcast(S, iso3 + mixing + variable ~ acat, value.var = "value")
+cnz <- S[, unique(iso3)]
+cnz <- c(sort(cnz[!cnz == "TOTAL"]), "TOTAL")
+setkey(S, iso3)
 S <- S[cnz]
-fwrite(S,file=here('outdata/smy.inc.csv'))
+fwrite(S, file = here("outdata/smy.inc.csv"))
 
 ## NOTE authors only
 ## create an ID to access the googlesheets results sheet
@@ -31,34 +31,38 @@ upload.to.sheets <- function(basename,filename,sheetid
 }
 
 ## upload relevant table data
-upload.to.sheets(here('outdata/'),'cftab',shid) #first will need to re-authenticate
+upload.to.sheets(here("outdata/"), "PAF.sex", shid) # first will need to re-authenticate
+upload.to.sheets(here("outdata/"), "cftab", shid) # first will need to re-authenticate
 
 ## rest can be run as block
 flz1 <- c(
-  'CDR.csv',
-  'cdro.csv',
-  'cdry.csv',
+  "CDR.csv",
+  "cdro.csv",
+  "cdry.csv",
   ## 'cftab.csv',
-  'cfWS.csv',
-  'ltbi.crange.csv',
-  'ltbi.PC.age.csv',
-  'ltbi.PC.noage.csv',
-  'ltbi.tot.age.csv',
-  'ltbi.tot.noage.csv',
-  'nhiv.csv',
-  'out.inc.csv',
-  'out.ltbi.csv',
-  'out.ltbi.sex',
-  'PAF.csv',
-  'PC_ranked_1014.csv',
-  'PC_ranked_1519.csv',
-  'RRstats.csv',
-  'smy.csv',
-  'smy.inc.csv',
-  'thinness.RRs.csv'
+  "cfWS.csv",
+  "ltbi.crange.csv",
+  "ltbi.PC.age.csv",
+  "ltbi.PC.noage.csv",
+  "ltbi.tot.age.csv",
+  "ltbi.tot.noage.csv",
+  "nhiv.csv",
+  "out.inc.csv",
+  "out.ltbi.csv",
+  "out.ltbi.sex",
+  "PAF.csv",
+  "PC_ranked_1014.csv",
+  "PC_ranked_1519.csv",
+  "RRstats.csv",
+  "smy.csv",
+  "smy.inc.csv",
+  "thinness.RRs.csv"
 )
 
-for( fn in flz1)
-  upload.to.sheets(here('outdata/'),fn,shid)
+
+for (fn in flz1) {
+  upload.to.sheets(here("outdata/"), fn, shid)
+}
+
 
 Sys.sleep(120) #wait a bit so as not to annoy google
